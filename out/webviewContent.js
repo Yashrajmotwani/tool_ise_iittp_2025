@@ -1,6 +1,8 @@
-import * as vscode from 'vscode';
-
-export function getWebviewContent(fileName: string, functionCount: number) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getWebviewContent = getWebviewContent;
+exports.getRefactorHTMLContent = getRefactorHTMLContent;
+function getWebviewContent(fileName, functionCount) {
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -449,21 +451,14 @@ export function getWebviewContent(fileName: string, functionCount: number) {
 </html>
 `;
 }
-
-export function getRefactorHTMLContent(
-    functions: {name: string, body: string}[],
-    issueDefinitions: Record<string, string>,
-    emojiMap: Record<string, string>
-) {
+function getRefactorHTMLContent(functions, issueDefinitions, emojiMap) {
     let refactorHTML = '';
-    let functionIssues: Record<string, { issues: string[], links: string[] }> = {};
+    let functionIssues = {};
     let totalIssues = 0;
-
     functions.forEach(func => {
         const functionName = func.name;
         const body = func.body;
-        const detectedIssues = new Set<string>();
-
+        const detectedIssues = new Set();
         if ((body.match(/\bif\s*\(.*\)\s*\{/g) || []).length > 3) {
             detectedIssues.add("Too many if-else statements! Consider using polymorphism.");
         }
@@ -480,16 +475,14 @@ export function getRefactorHTMLContent(
         if ((body.match(magicNumberPattern) || []).length > 0) {
             detectedIssues.add("Magic numbers detected! Use named constants.");
         }
-
         if (detectedIssues.size > 0) {
-            functionIssues[functionName] = { 
-                issues: Array.from(detectedIssues), 
+            functionIssues[functionName] = {
+                issues: Array.from(detectedIssues),
                 links: Array.from(detectedIssues).map(issue => issueDefinitions[issue])
             };
             totalIssues += detectedIssues.size;
         }
     });
-
     for (const [funcName, data] of Object.entries(functionIssues)) {
         refactorHTML += `
         <div class="function-card">
@@ -498,7 +491,6 @@ export function getRefactorHTMLContent(
                 <span class="status-badge badge-error">${data.issues.length} issues</span>
             </div>
             <ul class="issue-list">`;
-        
         data.issues.forEach((issue, index) => {
             const emoji = emojiMap[issue] || '⚠️';
             refactorHTML += `
@@ -516,10 +508,8 @@ export function getRefactorHTMLContent(
                 </div>
             </li>`;
         });
-        
         refactorHTML += `</ul></div>`;
     }
-
     if (refactorHTML === '') {
         refactorHTML = `
         <div class="function-card">
@@ -529,9 +519,9 @@ export function getRefactorHTMLContent(
             <p>Great job! No major code smells detected in your functions.</p>
         </div>`;
     }
-
     return {
         html: refactorHTML,
         issueCount: totalIssues
     };
 }
+//# sourceMappingURL=webviewContent.js.map

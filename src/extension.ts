@@ -76,7 +76,8 @@ export function activate(context: vscode.ExtensionContext) {
                             command: 'displayRefactor',
                             content: {
                                 html: refactorContent.html,
-                                issueCount: refactorContent.issueCount
+                                issueCount: refactorContent.issueCount,
+                                functionCount: functionCount
                             }
                         });
                         break;
@@ -90,12 +91,14 @@ export function activate(context: vscode.ExtensionContext) {
             context.subscriptions
         );
 
-        // Emoji decorations - identical to original
+        // Emoji decorations
         vscode.workspace.onDidChangeTextDocument(event => {
             const editor = vscode.window.activeTextEditor;
             if (!editor || event.document !== editor.document) return;
 
-            const text = editor.document.getText();
+            const originalText = editor.document.getText();
+            const cleanedText = stripComments(originalText);
+            
             const decorationOptions: vscode.DecorationOptions[] = [];
 
             // Code pattern emojis
@@ -126,18 +129,28 @@ export function activate(context: vscode.ExtensionContext) {
             // Check for missing semicolons
             const checkMissingSemicolon = () => {
                 const decorations: vscode.DecorationOptions[] = [];
+                let isInsideBlockComment = false;
 
                 for (let i = 0; i < editor.document.lineCount; i++) {
                     const line = editor.document.lineAt(i);
                     const lineText = line.text.trim();
 
+                    // Handle block comment detection
+                    if (lineText.startsWith('/*')) {
+                        isInsideBlockComment = true;
+                    }
+
                     if (lineText === '' || 
                         lineText.startsWith('//') || 
-                        lineText.startsWith('/*') || 
+                        isInsideBlockComment || 
                         lineText.match(/(if|for|while|switch|return|#include|#define|namespace|class|struct|try|catch)\b/) ||
                         lineText.endsWith('{') || 
                         lineText.endsWith('}')) {
-                        continue;
+                            // Check for end of block comment
+                            if (lineText.includes('*/')) {
+                                isInsideBlockComment = false;
+                            }
+                            continue;
                     }
 
                     if (!lineText.endsWith(';') && 
@@ -162,10 +175,28 @@ export function activate(context: vscode.ExtensionContext) {
             // Check for trailing whitespace
             const checkTrailingWhitespace = () => {
                 const decorations: vscode.DecorationOptions[] = [];
+                let isInsideBlockComment = false;
 
                 for (let i = 0; i < editor.document.lineCount; i++) {
                     const line = editor.document.lineAt(i);
                     const lineText = line.text;
+
+                    // Check if we're entering a block comment
+                    if (lineText.startsWith('/*')) {
+                        isInsideBlockComment = true;
+                    }
+
+                    // Skip empty lines, single-line comments, and block comments
+                    if (lineText === '' || 
+                        lineText.startsWith('//') || 
+                        isInsideBlockComment) {
+                        
+                        // Check if we're exiting a block comment
+                        if (lineText.includes('*/')) {
+                            isInsideBlockComment = false;
+                        }
+                        continue;
+                    }
                     
                     if (lineText.trim().length > 0 && lineText.match(/\s+$/)) {
                         decorations.push({
@@ -187,16 +218,38 @@ export function activate(context: vscode.ExtensionContext) {
             // Process code patterns
             const emojiMatches: Map<number, {emojis: Set<string>, hovers: Set<string>}> = new Map();
             
+            // emojiPatterns.forEach(({ regex, emoji, hover, minCount = 1 }) => {
+            //     const matches = [...text.matchAll(regex)];
+            //     if (matches.length >= minCount) {
+            //         matches.forEach(match => {
+            //             const lineNumber = editor.document.positionAt(match.index!).line;
+            //             if (!emojiMatches.has(lineNumber)) {
+            //                 emojiMatches.set(lineNumber, { emojis: new Set(), hovers: new Set() });
+            //             }
+            //             emojiMatches.get(lineNumber)!.emojis.add(emoji);
+            //             emojiMatches.get(lineNumber)!.hovers.add(hover);
+            //         });
+            //     }
+            // });
+
             emojiPatterns.forEach(({ regex, emoji, hover, minCount = 1 }) => {
-                const matches = [...text.matchAll(regex)];
+                const matches = [...cleanedText.matchAll(regex)];
                 if (matches.length >= minCount) {
                     matches.forEach(match => {
-                        const lineNumber = editor.document.positionAt(match.index!).line;
-                        if (!emojiMatches.has(lineNumber)) {
-                            emojiMatches.set(lineNumber, { emojis: new Set(), hovers: new Set() });
+                        // Find position in original document
+                        const originalPosition = originalText.indexOf(match[0]);
+                        if (originalPosition >= 0) {
+                            const lineNumber = editor.document.positionAt(originalPosition).line;
+                            
+                            if (!emojiMatches.has(lineNumber)) {
+                                emojiMatches.set(lineNumber, { 
+                                    emojis: new Set(), 
+                                    hovers: new Set() 
+                                });
+                            }
+                            emojiMatches.get(lineNumber)!.emojis.add(emoji);
+                            emojiMatches.get(lineNumber)!.hovers.add(hover);
                         }
-                        emojiMatches.get(lineNumber)!.emojis.add(emoji);
-                        emojiMatches.get(lineNumber)!.hovers.add(hover);
                     });
                 }
             });
