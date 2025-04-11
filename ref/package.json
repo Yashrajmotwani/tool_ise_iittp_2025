@@ -1,0 +1,54 @@
+{
+  "name": "complexity-analyzer",
+  "displayName": "Complexity Analyzer",
+  "description": "Analyzes C++ functions and suggests refactorings with useful links",
+  "version": "1.0.0",
+  "publisher": "your-publisher-id",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:complexity-analyzer.showComplexity",
+    "onLanguage:cpp"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "complexity-analyzer.showComplexity",
+        "title": "Show Refactor Suggestions"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "cppRefactorSidebar",
+          "name": "Refactor Suggestions"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "cpp",
+        "aliases": [
+          "C++",
+          "cpp"
+        ],
+        "extensions": [
+          ".cpp",
+          ".cc",
+          ".cxx",
+          ".h",
+          ".hpp"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "@types/vscode": "^1.75.0"
+  }
+}
