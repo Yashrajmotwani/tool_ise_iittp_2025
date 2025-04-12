@@ -1,0 +1,52 @@
+{
+  "name": "cpp-refactor-helper",
+  "displayName": "C++ Refactor Helper",
+  "description": "Analyze C++ code for refactoring patterns like long methods, magic numbers, and nested loops.",
+  "version": "1.0.0",
+  "publisher": "your-publisher-id",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:cpp",
+    "onCommand:cppRefactorHelper.analyzeFunction"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cppRefactorHelper.analyzeFunction",
+        "title": "Cpp Refactor Helper: Analyze Function",
+        "category": "C++ Refactor Helper"
+      }
+    ],
+    "languages": [
+      {
+        "id": "cpp",
+        "aliases": [
+          "C++",
+          "cpp"
+        ],
+        "extensions": [
+          ".cpp",
+          ".cc",
+          ".cxx",
+          ".h",
+          ".hpp"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "@types/vscode": "^1.75.0"
+  }
+}
