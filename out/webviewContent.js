@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWebviewContent = getWebviewContent;
 exports.getRefactorHTMLContent = getRefactorHTMLContent;
-function getWebviewContent(fileName, functionCount) {
+exports.getRefactorHTMLContent2 = getRefactorHTMLContent2;
+function getWebviewContent(fileName) {
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -305,10 +306,6 @@ function getWebviewContent(fileName, functionCount) {
         
         <div class="summary-stats">
             <div class="stat-card">
-                <div class="stat-value" id="function-count">${functionCount ?? '0'}</div>
-                <div class="stat-label">Functions Detected</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-value" id="completed-tasks">0</div>
                 <div class="stat-label">Tasks Completed</div>
             </div>
@@ -418,32 +415,6 @@ function getWebviewContent(fileName, functionCount) {
                     document.getElementById('function-count').textContent = message.content.functionCount;
                 }
                 
-                // // Update summary
-                // if (message.content.issueCount > 0) {
-                //     summary.innerHTML = \`
-                //         <div class="issue-item" style="background-color: rgba(244, 67, 54, 0.1);">
-                //             <div class="issue-title">
-                //                 <span class="emoji">⚠️</span> 
-                //                 Found \${message.content.issueCount} potential issues in your code
-                //             </div>
-                //             <div class="issue-solution">
-                //                 Review the recommendations below and consider refactoring for better code quality.
-                //             </div>
-                //         </div>
-                //     \`;
-                // } else {
-                //     summary.innerHTML = \`
-                //         <div class="issue-item" style="background-color: rgba(76, 175, 80, 0.1);">
-                //             <div class="issue-title">
-                //                 <span class="emoji">🎉</span> 
-                //                 No major issues found!
-                //             </div>
-                //             <div class="issue-solution">
-                //                 Your code looks clean. Keep up the good work!
-                //             </div>
-                //         </div>
-                //     \`;
-                // }
             }
         });
     </script>
@@ -451,7 +422,128 @@ function getWebviewContent(fileName, functionCount) {
 </html>
 `;
 }
-function getRefactorHTMLContent(functions, issueDefinitions, emojiMap) {
+// Refactoring rules
+const refactorRules = [
+    {
+        key: 'long-function',
+        desc: 'Function is too long. Break into smaller functions.',
+        pattern: (code) => code.split(/\n/).length > 30,
+        links: [
+            'https://refactoring.guru/extract-method',
+            'https://dev.to/tkarropoulos/extract-method-refactoring-gn5'
+        ]
+    },
+    {
+        key: 'nested-loops',
+        desc: 'Multiple nested loops detected. Consider simplifying or refactoring.',
+        pattern: (code) => (code.match(/for\s*\(.*\)/g) || []).length >= 2,
+        links: ['https://juliuskoronci.medium.com/the-evil-nested-for-loop-9fbc2f999ec1']
+    },
+    {
+        key: 'magic-numbers',
+        desc: 'Magic numbers found. Replace them with named constants.',
+        pattern: (code) => /[^\w](\d{2,}|[1-9])[^\w]/.test(code),
+        links: [
+            'https://en.wikipedia.org/wiki/Magic_number_(programming)',
+            'https://refactoring.guru/replace-magic-number-with-symbolic-constant'
+        ]
+    },
+    {
+        key: 'duplicate-code',
+        desc: 'Possible duplicate lines. Consider extracting common logic.',
+        pattern: (code) => {
+            const lines = code.split(/\n/).map(line => line.trim()).filter(l => l.length > 10);
+            const duplicates = lines.filter((line, idx) => lines.indexOf(line) !== idx);
+            return duplicates.length > 0;
+        },
+        links: [
+            'https://www.codeant.ai/blogs/refactor-duplicate-code-examples',
+            'https://refactoring.guru/smells/duplicate-code'
+        ]
+    },
+    {
+        key: 'long-parameter-list',
+        desc: 'Function has too many parameters. Consider grouping them.',
+        pattern: (code) => /\(.*?,.*?,.*?,.*?,/.test(code),
+        links: [
+            'https://stackoverflow.com/questions/439574/whats-the-best-way-to-refactor-a-method-that-has-too-many-6-parameters',
+            'https://codesignal.com/learn/courses/refactoring-by-leveraging-your-tests-with-csharp-xunit/lessons/long-parameter-list-introduce-parameter-object'
+        ]
+    },
+    {
+        key: 'deep-nesting',
+        desc: 'Deeply nested code blocks found. Try flattening logic.',
+        pattern: (code) => code.split('{').length - code.split('}').length >= 5,
+        links: [
+            'https://shuhanmirza.medium.com/two-simple-methods-to-refactor-deeply-nested-code-78eb302bb0b4'
+        ]
+    },
+    {
+        key: 'temp-variable',
+        desc: 'Temporary variable used only once. Consider replacing with expression.',
+        pattern: (code) => /(?:int|float|double|auto)\s+\w+\s*=.*;/.test(code),
+        links: [
+            'https://wiki.c2.com/?ReplaceTempWithQuery',
+            'https://refactoring.guru/replace-temp-with-query'
+        ]
+    }
+];
+function getRefactorHTMLContent(functions) {
+    let refactorHTML = '';
+    let totalIssues = 0;
+    const functionIssues = {};
+    functions.forEach(func => {
+        const detectedIssues = refactorRules
+            .filter(rule => rule.pattern(func.body))
+            .map(rule => rule.desc);
+        if (detectedIssues.length > 0) {
+            functionIssues[func.name] = {
+                issues: detectedIssues,
+                links: detectedIssues.map(desc => refactorRules.find(r => r.desc === desc)?.links[0] || '#')
+            };
+            totalIssues += detectedIssues.length;
+        }
+    });
+    for (const [funcName, data] of Object.entries(functionIssues)) {
+        refactorHTML += `
+        <div class="function-card">
+            <div class="function-name">
+                <span class="emoji">🧩</span> ${funcName}
+                <span class="status-badge badge-error">${data.issues.length} issues</span>
+            </div>
+            <ul class="issue-list">`;
+        data.issues.forEach((issue, index) => {
+            refactorHTML += `
+            <li class="issue-item">
+                <div class="issue-title">
+                    ${issue} <!-- Removed emoji span -->
+                </div>
+                <div class="issue-solution">
+                    <strong>Solution:</strong> 
+                    <a class="refactor-link" href="${data.links[index]}" target="_blank">
+                        Learn more about this refactoring
+                        <span class="emoji">🔗</span>
+                    </a>
+                </div>
+            </li>`;
+        });
+        refactorHTML += `</ul></div>`;
+    }
+    if (refactorHTML === '') {
+        refactorHTML = `
+        <div class="function-card">
+            <div class="function-name">
+                <span class="emoji">🎉</span> No issues detected
+            </div>
+            <p>Great job! No major code smells detected in your functions.</p>
+        </div>`;
+    }
+    return {
+        html: refactorHTML,
+        issueCount: totalIssues,
+    };
+}
+function getRefactorHTMLContent2(functions, issueDefinitions, emojiMap) {
     let refactorHTML = '';
     let functionIssues = {};
     let totalIssues = 0;

@@ -60,9 +60,6 @@ function activate(context) {
         }
         const cleanedText = stripComments(text);
         const functionRegex = /(?:(?:int|void|float|double|char|string|bool)\s+)?(?!main\b)(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g;
-        const countFunctionRegex = /(?:(?:int|void|float|double|char|string|bool)\s+)?(?!if|while|for|switch\b)(\w+)\s*\(([^)]*)\)\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
-        const validFunctions = [...cleanedText.matchAll(countFunctionRegex)];
-        const functionCount = validFunctions.length;
         let functions = [];
         let match;
         while ((match = functionRegex.exec(text)) !== null) {
@@ -71,36 +68,39 @@ function activate(context) {
         functions.forEach((fn, i) => {
             console.log(`Function ${i + 1}: ${fn.name}`);
         });
-        const issueDefinitions = {
-            "Too many if-else statements! Consider using polymorphism.": "https://refactoring.guru/replace-conditional-with-polymorphism",
-            "Large switch detected! Consider using the state pattern.": "https://refactoring.guru/state",
-            "Nested loops detected! Try early return or breaking into smaller functions.": "https://refactoring.guru/split-loop",
-            "Too many parameters! Consider encapsulating them into an object.": "https://refactoring.guru/introduce-parameter-object",
-            "Magic numbers detected! Use named constants.": "https://refactoring.guru/replace-magic-number-with-symbolic-constant",
-            "Missing semicolons detected!": "",
-            "Trailing whitespace detected!": ""
-        };
-        const emojiMap = {
-            "Too many if-else statements! Consider using polymorphism.": "💩",
-            "Large switch detected! Consider using the state pattern.": "🌀",
-            "Nested loops detected! Try early return or breaking into smaller functions.": "🔁",
-            "Too many parameters! Consider encapsulating them into an object.": "📦",
-            "Magic numbers detected! Use named constants.": "🔢",
-            "Missing semicolons detected!": "❌",
-            "Trailing whitespace detected!": "⚠️"
-        };
+        // const issueDefinitions: Record<string, string> = {
+        //     "Too many if-else statements! Consider using polymorphism.": "https://refactoring.guru/replace-conditional-with-polymorphism",
+        //     "Large switch detected! Consider using the state pattern.": "https://refactoring.guru/state",
+        //     "Nested loops detected! Try early return or breaking into smaller functions.": "https://refactoring.guru/split-loop",
+        //     "Too many parameters! Consider encapsulating them into an object.": "https://refactoring.guru/introduce-parameter-object",
+        //     "Magic numbers detected! Use named constants.": "https://refactoring.guru/replace-magic-number-with-symbolic-constant",
+        //     "Missing semicolons detected!": "",
+        //     "Trailing whitespace detected!": ""
+        // };
+        // const emojiMap: Record<string, string> = {
+        //     "Too many if-else statements! Consider using polymorphism.": "💩",
+        //     "Large switch detected! Consider using the state pattern.": "🌀",
+        //     "Nested loops detected! Try early return or breaking into smaller functions.": "🔁",
+        //     "Too many parameters! Consider encapsulating them into an object.": "📦",
+        //     "Magic numbers detected! Use named constants.": "🔢",
+        //     "Missing semicolons detected!": "❌",
+        //     "Trailing whitespace detected!": "⚠️"
+        // };
         const panel = vscode.window.createWebviewPanel('refactorSuggestions', `Code Review Checklist - ${fileName}`, vscode.ViewColumn.One, { enableScripts: true });
-        panel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled', functionCount);
+        panel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled');
         panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'checkRefactor':
-                    const refactorContent = (0, webviewContent_1.getRefactorHTMLContent)(functions, issueDefinitions, emojiMap);
+                    if (!isCppFile(editor)) {
+                        vscode.window.showWarningMessage(`Refactoring analysis is only available for C/C++ files, NOT (${fileName}).`, "OK");
+                        return;
+                    }
+                    const refactorContent = (0, webviewContent_1.getRefactorHTMLContent)(functions);
                     panel.webview.postMessage({
                         command: 'displayRefactor',
                         content: {
                             html: refactorContent.html,
-                            issueCount: refactorContent.issueCount,
-                            functionCount: functionCount
+                            issueCount: refactorContent.issueCount
                         }
                     });
                     break;
