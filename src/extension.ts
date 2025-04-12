@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { getWebviewContent, getRefactorHTMLContent } from './webviewContent';
 
+const isCppFile = (editor: vscode.TextEditor) => {
+    const languageId = editor.document.languageId;
+    return languageId === 'c' || languageId === 'cpp';
+};
+
 let decorationType: vscode.TextEditorDecorationType;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -37,6 +42,10 @@ export function activate(context: vscode.ExtensionContext) {
         while ((match = functionRegex.exec(text)) !== null) {
             functions.push({ name: match[1], body: match[3] });
         }
+
+        functions.forEach((fn, i) => {
+            console.log(`Function ${i + 1}: ${fn.name}`);
+        });
 
         const issueDefinitions: Record<string, string> = {
             "Too many if-else statements! Consider using polymorphism.": "https://refactoring.guru/replace-conditional-with-polymorphism",
@@ -91,10 +100,24 @@ export function activate(context: vscode.ExtensionContext) {
             context.subscriptions
         );
 
+        let hasShownWarning = false;
+
         // Emoji decorations
         vscode.workspace.onDidChangeTextDocument(event => {
             const editor = vscode.window.activeTextEditor;
             if (!editor || event.document !== editor.document) return;
+
+            if (!isCppFile(editor)) {
+                editor.setDecorations(decorationType, []);
+                if (!hasShownWarning) {
+                    vscode.window.showWarningMessage(
+                        `Code Emotion emojis are disabled for "${fileName}" - only C/C++ files are supported.`,
+                        "OK"
+                    );
+                    hasShownWarning = true;
+                }
+                return;
+            }
 
             const originalText = editor.document.getText();
             const cleanedText = stripComments(originalText);
@@ -127,8 +150,10 @@ export function activate(context: vscode.ExtensionContext) {
             ];
 
             // Check for missing semicolons
-            const checkMissingSemicolon = () => {
+            const checkMissingSemicolon = (editor: vscode.TextEditor) => {
                 const decorations: vscode.DecorationOptions[] = [];
+                if (!isCppFile(editor)) return decorations;
+
                 let isInsideBlockComment = false;
 
                 for (let i = 0; i < editor.document.lineCount; i++) {
@@ -173,8 +198,10 @@ export function activate(context: vscode.ExtensionContext) {
             };
 
             // Check for trailing whitespace
-            const checkTrailingWhitespace = () => {
+            const checkTrailingWhitespace = (editor: vscode.TextEditor) => {
                 const decorations: vscode.DecorationOptions[] = [];
+                if (!isCppFile(editor)) return decorations;
+
                 let isInsideBlockComment = false;
 
                 for (let i = 0; i < editor.document.lineCount; i++) {
@@ -217,20 +244,6 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Process code patterns
             const emojiMatches: Map<number, {emojis: Set<string>, hovers: Set<string>}> = new Map();
-            
-            // emojiPatterns.forEach(({ regex, emoji, hover, minCount = 1 }) => {
-            //     const matches = [...text.matchAll(regex)];
-            //     if (matches.length >= minCount) {
-            //         matches.forEach(match => {
-            //             const lineNumber = editor.document.positionAt(match.index!).line;
-            //             if (!emojiMatches.has(lineNumber)) {
-            //                 emojiMatches.set(lineNumber, { emojis: new Set(), hovers: new Set() });
-            //             }
-            //             emojiMatches.get(lineNumber)!.emojis.add(emoji);
-            //             emojiMatches.get(lineNumber)!.hovers.add(hover);
-            //         });
-            //     }
-            // });
 
             emojiPatterns.forEach(({ regex, emoji, hover, minCount = 1 }) => {
                 const matches = [...cleanedText.matchAll(regex)];
@@ -271,8 +284,8 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Add all diagnostic decorations
             decorationOptions.push(
-                ...checkMissingSemicolon(),
-                ...checkTrailingWhitespace()
+                ...checkMissingSemicolon(editor),
+                ...checkTrailingWhitespace(editor)
             );
 
             editor.setDecorations(decorationType, []); // clear old
