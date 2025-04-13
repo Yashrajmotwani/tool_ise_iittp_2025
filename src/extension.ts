@@ -167,7 +167,7 @@ function updateWebView(filePath: string) {
 
 function getWebViewContent(functions: FunctionInfo[]): string {
     const rows = functions.map(fn =>
-        `<tr><td>${fn.name}</td><td>${fn.score}</td><td>${fn.line}</td></tr>`
+        `<tr><td>${fn.line}</td><td>${fn.name}</td><td>${fn.score}</td></tr>`
     ).join('');
     return `
         <!DOCTYPE html>
@@ -180,13 +180,14 @@ function getWebViewContent(functions: FunctionInfo[]): string {
             <h2>Heatmap Controls</h2>
             <h3>Function Complexity Table</h3>
             <table border="1" cellpadding="5" cellspacing="0">
-                <tr><th>Function</th><th>Complexity</th><th>Line</th></tr>
+                <tr><th>Line</th><th>Function</th><th>Complexity</th></tr>
                 ${rows}
             </table>
         </body>
         </html>
     `;
 }
+
 
 export function activate(context: vscode.ExtensionContext) {
     createDecorationTypes();
