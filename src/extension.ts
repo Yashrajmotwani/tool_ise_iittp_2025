@@ -100,8 +100,8 @@ function runLizardAndDecorate() {
     }
 
     let lang = 'cpp';
-    if (ext === 'java') lang = 'java';
-    else if (ext === 'py') lang = 'python';
+    if (ext === 'java') {lang = 'java';}
+    else if (ext === 'py') {lang = 'python';}
 
     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
@@ -139,22 +139,29 @@ function runLizardAndDecorate() {
                 const endLine = parseInt(match[5], 10);
 
                 const key = `${name}@${startLine}`;
-                if (uniqueLines.has(key)) continue;
+                if (uniqueLines.has(key)) {continue;}
                 uniqueLines.add(key);
 
                 const color = getColorForComplexity(score);
 
                 functions.push({ name, score, line: startLine, endLine, nloc, color });
 
-                const range = new vscode.Range(startLine - 1, 0, startLine - 1, 100);
+                const range = new vscode.Range(startLine - 1, 0, endLine - 1, 1000);
+                const decorationType = vscode.window.createTextEditorDecorationType({
+                    light: { backgroundColor: color },
+                    dark: { backgroundColor: color }
+                });
+                
+                activeDecorations.push(decorationType);
+
                 const decor: vscode.DecorationOptions = {
                     range,
                     hoverMessage: `Complexity: ${score}`
                 };
-
-                if (score <= 5) decorations.green.push(decor);
-                else if (score <= 8) decorations.yellow.push(decor);
-                else decorations.red.push(decor);
+                editor.setDecorations(decorationType, [decor]);
+                if (score <= 5) {decorations.green.push(decor);}
+                else if (score <= 8) {decorations.yellow.push(decor);}
+                else {decorations.red.push(decor);}
             }
         }
 
