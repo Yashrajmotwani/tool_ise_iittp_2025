@@ -143,14 +143,6 @@ function showOrUpdateWebView(filePath: string) {
         );
         webViewPanel.webview.html = html;
 
-        webViewPanel.webview.onDidReceiveMessage(
-            message => {
-                if (message.command === 'toggleHeatmap') {
-                    toggleHeatmapFunction();
-                }
-            }
-        );
-
         webViewPanel.onDidDispose(() => {
             webViewPanel = null;
         });
@@ -179,18 +171,11 @@ function getWebViewContent(functions: FunctionInfo[]): string {
         </head>
         <body>
             <h2>Heatmap Controls</h2>
-            <button onclick="toggleHeatmap()">Toggle Heatmap</button>
             <h3>Function Complexity Table</h3>
             <table border="1" cellpadding="5" cellspacing="0">
                 <tr><th>Function</th><th>Complexity</th><th>Line</th></tr>
                 ${rows}
             </table>
-            <script>
-                const vscode = acquireVsCodeApi();
-                function toggleHeatmap() {
-                    vscode.postMessage({ command: 'toggleHeatmap' });
-                }
-            </script>
         </body>
         </html>
     `;
