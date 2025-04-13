@@ -147,24 +147,17 @@ function runLizardAndDecorate() {
                 functions.push({ name, score, line: startLine, endLine, nloc, color });
 
                 const range = new vscode.Range(startLine - 1, 0, endLine - 1, 1000);
-                const decorationType = vscode.window.createTextEditorDecorationType({
-                    light: { backgroundColor: color },
-                    dark: { backgroundColor: color }
-                });
-                
-                activeDecorations.push(decorationType);
-
+                const hoverMessage = `Complexity: ${score}`;
                 const decor: vscode.DecorationOptions = {
-                    range,
+                    range: new vscode.Range(startLine - 1, 0, endLine - 1, 1000),
                     hoverMessage: `Complexity: ${score}`
                 };
-                editor.setDecorations(decorationType, [decor]);
                 if (score <= 5) {decorations.green.push(decor);}
                 else if (score <= 8) {decorations.yellow.push(decor);}
                 else {decorations.red.push(decor);}
             }
         }
-        
+
 
         storedDecorationsPerFile.set(filePath, decorations);
         heatmapVisible = true;
