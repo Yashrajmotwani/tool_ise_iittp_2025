@@ -3,15 +3,26 @@ import { spawn } from 'child_process';
 
 let heatmapVisible = false;
 
+
+
 let green: vscode.TextEditorDecorationType;
 let yellow: vscode.TextEditorDecorationType;
 let red: vscode.TextEditorDecorationType;
 
-interface FunctionInfo {
+// interface FunctionInfo {
+//     name: string;
+//     score: number;
+//     line: number;
+// }
+
+type FunctionInfo = {
     name: string;
     score: number;
-    line: number;
-}
+    line: number;       // start line
+    endLine: number;    // end line
+    nloc: number;       // number of lines of code
+    color: string;      // color assigned based on complexity
+};
 
 interface FileDecorations {
     green: vscode.DecorationOptions[];
@@ -125,106 +136,51 @@ function getColorForComplexity(score: number): string {
 //         };
 
 //         for (const line of lines) {
-//             const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
+//             const match = line.match(/^(\s*\d+)\s+(\d+)\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-(\d+)@/);
 //             if (match) {
-//                 const rawScore = parseInt(match[1], 10);
-//                 // const score = Math.min(rawScore, 10);
-//                 const score = rawScore;
-//                 const name = match[2];
-//                 const lineNum = parseInt(match[3], 10);
-//                 const key = `${name}@${lineNum}`;
+//                 const nloc = parseInt(match[2], 10);
+//                 const score = parseInt(match[3], 10);
+//                 const name = match[4];
+//                 const startLine = parseInt(match[5], 10);
+//                 const endLine = parseInt(match[6], 10);
+
+//                 const key = `${name}@${startLine}`;
 //                 if (uniqueLines.has(key)) { continue; }
 //                 uniqueLines.add(key);
 
-//                 functions.push({ name, score, line: lineNum });
+//                 const color = getColorForComplexity(score);
 
-//                 const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 100);
+//                 functions.push({
+//                     name,
+//                     score,
+//                     line: startLine,
+//                     endLine,
+//                     nloc,
+//                     color
+//                 });
+
+//                 const range = new vscode.Range(startLine - 1, 0, startLine - 1, 100);
 //                 const hoverMessage = `Complexity: ${score}`;
-//                 const decor: vscode.DecorationOptions = { range, hoverMessage };
 
-//                 if (score <= 5) {
-//                     decorations.green.push(decor);
-//                 } else if (score <= 8) {
-//                     decorations.yellow.push(decor);
-//                 } else {
-//                     decorations.red.push(decor);
-//                 }
+//                 const decorationType = vscode.window.createTextEditorDecorationType({
+//                     light: { backgroundColor: color },
+//                     dark: { backgroundColor: color }
+//                 });
+
+//                 const decor: vscode.DecorationOptions = {
+//                     range,
+//                     hoverMessage
+//                 };
+
+//                 editor.setDecorations(decorationType, [decor]);
+
+//                 if (score <= 5) { decorations.green.push(decor); }
+//                 else if (score <= 8) { decorations.yellow.push(decor); }
+//                 else { decorations.red.push(decor); }
 //             }
 //         }
 
 //         storedDecorationsPerFile.set(filePath, decorations);
-//         applyDecorations(editor);
-//         heatmapVisible = true;
-//         vscode.window.showInformationMessage(`Heatmap is now ON`);
-//         showOrUpdateWebView(filePath);
-//     });
-// }
-
-// function runLizardAndDecorate() {
-//     const editor = vscode.window.activeTextEditor;
-//     if (!editor) {
-//         vscode.window.showErrorMessage('No active editor');
-//         return;
-//     }
-
-//     const filePath = editor.document.fileName;
-//     const ext = filePath.split('.').pop()?.toLowerCase();
-//     if (!['cpp', 'c', 'java', 'py'].includes(ext ?? '')) {
-//         vscode.window.showErrorMessage('Unsupported file type.');
-//         return;
-//     }
-
-//     let lang = 'cpp';
-//     if (ext === 'java') { lang = 'java'; }
-//     else if (ext === 'py') { lang = 'python'; }
-
-//     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
-//     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
-
-//     let output = '';
-//     let error = '';
-
-//     lizardProcess.stdout.on('data', data => output += data.toString());
-//     lizardProcess.stderr.on('data', data => error += data.toString());
-
-//     lizardProcess.on('close', () => {
-//         if (error) {
-//             vscode.window.showErrorMessage(`Lizard error: ${error}`);
-//             return;
-//         }
-
-//         const lines = output.split('\n').filter(line => line.includes('@'));
-//         const functions: FunctionInfo[] = [];
-//         const uniqueLines = new Set<string>();
-
-//         for (const line of lines) {
-//             const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
-//             if (match) {
-//                 const rawScore = parseInt(match[1], 10);
-//                 const score = rawScore;
-//                 const name = match[2];
-//                 const lineNum = parseInt(match[3], 10);
-//                 const key = `${name}@${lineNum}`;
-//                 if (uniqueLines.has(key)) { continue; }
-//                 uniqueLines.add(key);
-
-//                 functions.push({ name, score, line: lineNum });
-
-//                 const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 100);
-//                 const hoverMessage = `Complexity: ${score}`;
-//                 const color = getColorForComplexity(score);
-
-//                 const decorationType = vscode.window.createTextEditorDecorationType({
-//                     isWholeLine: true,
-//                     backgroundColor: color
-//                 });
-
-//                 const decor: vscode.DecorationOptions = { range, hoverMessage };
-//                 editor.setDecorations(decorationType, [decor]);
-//             }
-//         }
-
-//         storedDecorationsPerFile.set(filePath, { green: [], yellow: [], red: [], functions });
 //         heatmapVisible = true;
 //         vscode.window.showInformationMessage(`Heatmap is now ON`);
 //         showOrUpdateWebView(filePath);
@@ -246,8 +202,8 @@ function runLizardAndDecorate() {
     }
 
     let lang = 'cpp';
-    if (ext === 'java') {lang = 'java';}
-    else if (ext === 'py') {lang = 'python';}
+    if (ext === 'java') { lang = 'java'; }
+    else if (ext === 'py') { lang = 'python'; }
 
     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
@@ -276,43 +232,47 @@ function runLizardAndDecorate() {
         };
 
         for (const line of lines) {
-            const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
+            const match = line.match(/^\s*(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+([^\s@]+)@(\d+)-(\d+)@/);
             if (match) {
-                const rawScore = parseInt(match[1], 10);
-                const score = rawScore;
-                const name = match[2];
-                const lineNum = parseInt(match[3], 10);
-                const key = `${name}@${lineNum}`;
-                if (uniqueLines.has(key)) {continue;}
+                const nloc = parseInt(match[1], 10);
+                const score = parseInt(match[2], 10);
+                const name = match[3];
+                const startLine = parseInt(match[4], 10);
+                const endLine = parseInt(match[5], 10);
+
+                const key = `${name}@${startLine}`;
+                if (uniqueLines.has(key)) { continue; }
                 uniqueLines.add(key);
 
-                functions.push({ name, score, line: lineNum });
-
-                const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 100);
-                const hoverMessage = `Complexity: ${score}`;
                 const color = getColorForComplexity(score);
 
-                // Define the decoration options with background color
+                functions.push({
+                    name,
+                    score,
+                    line: startLine,
+                    endLine,
+                    nloc,
+                    color
+                });
+
+                const range = new vscode.Range(startLine - 1, 0, startLine - 1, 100);
+                const hoverMessage = `Complexity: ${score}`;
+
                 const decorationType = vscode.window.createTextEditorDecorationType({
-                    light: {
-                        backgroundColor: color
-                    },
-                    dark: {
-                        backgroundColor: color
-                    }
+                    light: { backgroundColor: color },
+                    dark: { backgroundColor: color }
                 });
 
                 const decor: vscode.DecorationOptions = {
                     range,
-                    hoverMessage,
+                    hoverMessage
                 };
 
-                // Apply decoration to the editor using the decorationType
                 editor.setDecorations(decorationType, [decor]);
 
-                if (score <= 5) {decorations.green.push(decor);}
-                else if (score <= 8) {decorations.yellow.push(decor);}
-                else {decorations.red.push(decor);}
+                if (score <= 5) { decorations.green.push(decor); }
+                else if (score <= 8) { decorations.yellow.push(decor); }
+                else { decorations.red.push(decor); }
             }
         }
 
@@ -322,6 +282,8 @@ function runLizardAndDecorate() {
         showOrUpdateWebView(filePath);
     });
 }
+
+
 
 
 
@@ -360,10 +322,38 @@ function updateWebView(filePath: string) {
     }
 }
 
+// function getWebViewContent(functions: FunctionInfo[]): string {
+//     const rows = functions.map(fn =>
+//         `<tr><td>${fn.line}</td><td>${fn.name}</td><td>${fn.score}</td></tr>`
+//     ).join('');
+//     return `
+//         <!DOCTYPE html>
+//         <html lang="en">
+//         <head>
+//             <meta charset="UTF-8">
+//             <title>Heatmap Panel</title>
+//         </head>
+//         <body>
+//             <h3>Function Complexity Table</h3>
+//             <table border="1" cellpadding="5" cellspacing="0">
+//                 <tr><th>Line</th><th>Function</th><th>Complexity</th></tr>
+//                 ${rows}
+//             </table>
+//         </body>
+//         </html>
+//     `;
+// }
 function getWebViewContent(functions: FunctionInfo[]): string {
     const rows = functions.map(fn =>
-        `<tr><td>${fn.line}</td><td>${fn.name}</td><td>${fn.score}</td></tr>`
+        `<tr>
+            <td>${fn.line}-${fn.endLine}</td>
+            <td>${fn.name}</td>
+            <td>${fn.nloc}</td>
+            <td>${fn.score}</td>
+            <td style="background-color:${fn.color};">${fn.color}</td>
+        </tr>`
     ).join('');
+
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -374,13 +364,20 @@ function getWebViewContent(functions: FunctionInfo[]): string {
         <body>
             <h3>Function Complexity Table</h3>
             <table border="1" cellpadding="5" cellspacing="0">
-                <tr><th>Line</th><th>Function</th><th>Complexity</th></tr>
+                <tr>
+                    <th>Lines</th>
+                    <th>Function</th>
+                    <th>NLOC</th>
+                    <th>Complexity</th>
+                    <th>Color</th>
+                </tr>
                 ${rows}
             </table>
         </body>
         </html>
     `;
 }
+
 
 export function activate(context: vscode.ExtensionContext) {
     createDecorationTypes();
