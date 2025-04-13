@@ -113,15 +113,45 @@ function runLizardAndDecorate() {
     }
 
     const filePath = editor.document.fileName;
-    const ext = filePath.split('.').pop()?.toLowerCase();
-    if (!['cpp', 'c', 'java', 'py'].includes(ext ?? '')) {
+    // const ext = filePath.split('.').pop()?.toLowerCase();
+    // if (!['cpp', 'c', 'java', 'py'].includes(ext ?? '')) {
+    //     vscode.window.showErrorMessage('Unsupported file type.');
+    //     return;
+    // }
+
+    // let lang = 'cpp';
+    // if (ext === 'java') {lang = 'java';}
+    // else if (ext === 'py') {lang = 'python';}
+
+    const langMap: Record<string, string> = {
+        'c': 'cpp',
+        'cpp': 'cpp',
+        'cc': 'cpp',
+        'h': 'cpp',
+        'java': 'java',
+        'cs': 'cs',
+        'js': 'javascript',
+        'ts': 'typescript',
+        'py': 'python',
+        'm': 'objc',
+        'mm': 'objc',
+        'swift': 'swift',
+        'rb': 'ruby',
+        'scala': 'scala',
+        'go': 'go',
+        'kt': 'kotlin',
+        'kts': 'kotlin',
+        'rs': 'rust'
+    };
+    
+    const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+    const lang = langMap[ext];
+    
+    if (!lang) {
         vscode.window.showErrorMessage('Unsupported file type.');
         return;
     }
-
-    let lang = 'cpp';
-    if (ext === 'java') {lang = 'java';}
-    else if (ext === 'py') {lang = 'python';}
+    
 
     // const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
     // const lizardPath = getLizardBinaryPath();
