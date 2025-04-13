@@ -31,7 +31,7 @@ function createDecorationTypes() {
 
 function applyDecorations(editor: vscode.TextEditor) {
     const decorations = storedDecorationsPerFile.get(editor.document.fileName);
-    if (!decorations) {return;}
+    if (!decorations) { return; }
 
     editor.setDecorations(green, decorations.green);
     editor.setDecorations(yellow, decorations.yellow);
@@ -46,7 +46,7 @@ function clearDecorations(editor: vscode.TextEditor) {
 
 function toggleHeatmapFunction() {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {return;}
+    if (!editor) { return; }
 
     if (heatmapVisible) {
         clearDecorations(editor);
@@ -57,7 +57,6 @@ function toggleHeatmapFunction() {
     }
 
     heatmapVisible = !heatmapVisible;
-    updateWebView(editor.document.fileName);
 }
 
 function runLizardAndDecorate() {
@@ -75,8 +74,8 @@ function runLizardAndDecorate() {
     }
 
     let lang = 'cpp';
-    if (ext === 'java') {lang = 'java';}
-    else if (ext === 'py') {lang = 'python';}
+    if (ext === 'java') { lang = 'java'; }
+    else if (ext === 'py') { lang = 'python'; }
 
     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
@@ -95,6 +94,8 @@ function runLizardAndDecorate() {
 
         const lines = output.split('\n').filter(line => line.includes('@'));
         const functions: FunctionInfo[] = [];
+        const uniqueLines = new Set<string>();
+
         const decorations: FileDecorations = {
             green: [],
             yellow: [],
@@ -102,27 +103,30 @@ function runLizardAndDecorate() {
             functions
         };
 
-        // Use a Set to avoid duplicate entries for functions
-        const functionNames = new Set<string>();
-
         for (const line of lines) {
             const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
             if (match) {
-                const score = parseInt(match[1], 10);
+                const rawScore = parseInt(match[1], 10);
+                const score = Math.min(rawScore, 10);
                 const name = match[2];
                 const lineNum = parseInt(match[3], 10);
+                const key = `${name}@${lineNum}`;
+                if (uniqueLines.has(key)) { continue; }
+                uniqueLines.add(key);
 
-                // Skip duplicate functions
-                if (functionNames.has(name)) continue;
-
-                functionNames.add(name);
                 functions.push({ name, score, line: lineNum });
 
                 const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 100);
-                const decor = { range, hoverMessage: `Complexity: ${score}` };
-                if (score <= 5) {decorations.green.push(decor);}
-                else if (score <= 10) {decorations.yellow.push(decor);}
-                else {decorations.red.push(decor);}
+                const hoverMessage = `Complexity: ${score}`;
+                const decor: vscode.DecorationOptions = { range, hoverMessage };
+
+                if (score <= 5) {
+                    decorations.green.push(decor);
+                } else if (score <= 8) {
+                    decorations.yellow.push(decor);
+                } else {
+                    decorations.red.push(decor);
+                }
             }
         }
 
@@ -136,7 +140,7 @@ function runLizardAndDecorate() {
 
 function showOrUpdateWebView(filePath: string) {
     const data = storedDecorationsPerFile.get(filePath);
-    if (!data) {return;}
+    if (!data) { return; }
 
     const html = getWebViewContent(data.functions);
     if (webViewPanel) {
@@ -177,7 +181,6 @@ function getWebViewContent(functions: FunctionInfo[]): string {
             <title>Heatmap Panel</title>
         </head>
         <body>
-            <h2>Heatmap Controls</h2>
             <h3>Function Complexity Table</h3>
             <table border="1" cellpadding="5" cellspacing="0">
                 <tr><th>Line</th><th>Function</th><th>Complexity</th></tr>
@@ -187,7 +190,6 @@ function getWebViewContent(functions: FunctionInfo[]): string {
         </html>
     `;
 }
-
 
 export function activate(context: vscode.ExtensionContext) {
     createDecorationTypes();
