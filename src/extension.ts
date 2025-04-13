@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 
 let heatmapVisible = false;
-
+let decorationType: vscode.TextEditorDecorationType | undefined;
 
 
 let green: vscode.TextEditorDecorationType;
@@ -84,6 +84,103 @@ function getColorForComplexity(score: number): string {
 
 
 
+// function runLizardAndDecorate() {
+//     const editor = vscode.window.activeTextEditor;
+//     if (!editor) {
+//         vscode.window.showErrorMessage('No active editor');
+//         return;
+//     }
+
+//     const filePath = editor.document.fileName;
+//     const ext = filePath.split('.').pop()?.toLowerCase();
+//     if (!['cpp', 'c', 'java', 'py'].includes(ext ?? '')) {
+//         vscode.window.showErrorMessage('Unsupported file type.');
+//         return;
+//     }
+
+//     let lang = 'cpp';
+//     if (ext === 'java') { lang = 'java'; }
+//     else if (ext === 'py') { lang = 'python'; }
+
+//     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
+//     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
+
+//     let output = '';
+//     let error = '';
+
+//     lizardProcess.stdout.on('data', data => output += data.toString());
+//     lizardProcess.stderr.on('data', data => error += data.toString());
+
+//     lizardProcess.on('close', () => {
+//         if (error) {
+//             vscode.window.showErrorMessage(`Lizard error: ${error}`);
+//             return;
+//         }
+
+//         const lines = output.split('\n').filter(line => line.includes('@'));
+//         const functions: FunctionInfo[] = [];
+//         const uniqueLines = new Set<string>();
+
+//         const decorations: FileDecorations = {
+//             green: [],
+//             yellow: [],
+//             red: [],
+//             functions
+//         };
+
+//         for (const line of lines) {
+//             const match = line.match(/^\s*(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+([^\s@]+)@(\d+)-(\d+)@/);
+//             if (match) {
+//                 const nloc = parseInt(match[1], 10);
+//                 const score = parseInt(match[2], 10);
+//                 const name = match[3];
+//                 const startLine = parseInt(match[4], 10);
+//                 const endLine = parseInt(match[5], 10);
+
+//                 const key = `${name}@${startLine}`;
+//                 if (uniqueLines.has(key)) { continue; }
+//                 uniqueLines.add(key);
+
+//                 const color = getColorForComplexity(score);
+
+//                 functions.push({
+//                     name,
+//                     score,
+//                     line: startLine,
+//                     endLine,
+//                     nloc,
+//                     color
+//                 });
+
+//                 const range = new vscode.Range(startLine - 1, 0, startLine - 1, 100);
+//                 const hoverMessage = `Complexity: ${score}`;
+
+//                 const decorationType = vscode.window.createTextEditorDecorationType({
+//                     light: { backgroundColor: color },
+//                     dark: { backgroundColor: color }
+//                 });
+
+//                 const decor: vscode.DecorationOptions = {
+//                     range,
+//                     hoverMessage
+//                 };
+
+//                 editor.setDecorations(decorationType, [decor]);
+
+//                 if (score <= 5) { decorations.green.push(decor); }
+//                 else if (score <= 8) { decorations.yellow.push(decor); }
+//                 else { decorations.red.push(decor); }
+//             }
+//         }
+
+//         storedDecorationsPerFile.set(filePath, decorations);
+//         heatmapVisible = true;
+//         vscode.window.showInformationMessage(`Heatmap is now ON`);
+//         showOrUpdateWebView(filePath);
+//     });
+// }
+let activeDecorations: vscode.TextEditorDecorationType[] = [];
+
 function runLizardAndDecorate() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -99,8 +196,8 @@ function runLizardAndDecorate() {
     }
 
     let lang = 'cpp';
-    if (ext === 'java') { lang = 'java'; }
-    else if (ext === 'py') { lang = 'python'; }
+    if (ext === 'java') lang = 'java';
+    else if (ext === 'py') lang = 'python';
 
     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
@@ -138,47 +235,34 @@ function runLizardAndDecorate() {
                 const endLine = parseInt(match[5], 10);
 
                 const key = `${name}@${startLine}`;
-                if (uniqueLines.has(key)) { continue; }
+                if (uniqueLines.has(key)) continue;
                 uniqueLines.add(key);
 
                 const color = getColorForComplexity(score);
 
-                functions.push({
-                    name,
-                    score,
-                    line: startLine,
-                    endLine,
-                    nloc,
-                    color
-                });
+                functions.push({ name, score, line: startLine, endLine, nloc, color });
 
                 const range = new vscode.Range(startLine - 1, 0, startLine - 1, 100);
-                const hoverMessage = `Complexity: ${score}`;
-
-                const decorationType = vscode.window.createTextEditorDecorationType({
-                    light: { backgroundColor: color },
-                    dark: { backgroundColor: color }
-                });
-
                 const decor: vscode.DecorationOptions = {
                     range,
-                    hoverMessage
+                    hoverMessage: `Complexity: ${score}`
                 };
 
-                editor.setDecorations(decorationType, [decor]);
-
-                if (score <= 5) { decorations.green.push(decor); }
-                else if (score <= 8) { decorations.yellow.push(decor); }
-                else { decorations.red.push(decor); }
+                if (score <= 5) decorations.green.push(decor);
+                else if (score <= 8) decorations.yellow.push(decor);
+                else decorations.red.push(decor);
             }
         }
 
         storedDecorationsPerFile.set(filePath, decorations);
         heatmapVisible = true;
+        applyDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now ON`);
         showOrUpdateWebView(filePath);
     });
 }
+
+
 
 
 function showOrUpdateWebView(filePath: string) {
@@ -269,4 +353,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-export function deactivate() {}
+export function deactivate() {
+    if (decorationType) {
+        decorationType.dispose(); // Clean up on extension unload
+    }
+}
