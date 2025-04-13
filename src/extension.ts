@@ -102,6 +102,9 @@ function runLizardAndDecorate() {
             functions
         };
 
+        // Use a Set to avoid duplicate entries for functions
+        const functionNames = new Set<string>();
+
         for (const line of lines) {
             const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
             if (match) {
@@ -109,6 +112,10 @@ function runLizardAndDecorate() {
                 const name = match[2];
                 const lineNum = parseInt(match[3], 10);
 
+                // Skip duplicate functions
+                if (functionNames.has(name)) continue;
+
+                functionNames.add(name);
                 functions.push({ name, score, line: lineNum });
 
                 const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 100);
