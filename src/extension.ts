@@ -31,7 +31,7 @@ function createDecorationTypes() {
 
 function applyDecorations(editor: vscode.TextEditor) {
     const decorations = storedDecorationsPerFile.get(editor.document.fileName);
-    if (!decorations) {return;}
+    if (!decorations) return;
 
     editor.setDecorations(green, decorations.green);
     editor.setDecorations(yellow, decorations.yellow);
@@ -42,12 +42,11 @@ function clearDecorations(editor: vscode.TextEditor) {
     editor.setDecorations(green, []);
     editor.setDecorations(yellow, []);
     editor.setDecorations(red, []);
-    storedDecorationsPerFile.delete(editor.document.fileName);
 }
 
 function toggleHeatmapFunction() {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {return;}
+    if (!editor) return;
 
     if (heatmapVisible) {
         clearDecorations(editor);
@@ -76,8 +75,8 @@ function runLizardAndDecorate() {
     }
 
     let lang = 'cpp';
-    if (ext === 'java') {lang = 'java';}
-    else if (ext === 'py') {lang = 'python';}
+    if (ext === 'java') lang = 'java';
+    else if (ext === 'py') lang = 'python';
 
     const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
     const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
@@ -85,13 +84,8 @@ function runLizardAndDecorate() {
     let output = '';
     let error = '';
 
-    lizardProcess.stdout.on('data', (data) => {
-        output += data.toString();
-    });
-
-    lizardProcess.stderr.on('data', (data) => {
-        error += data.toString();
-    });
+    lizardProcess.stdout.on('data', data => output += data.toString());
+    lizardProcess.stderr.on('data', data => error += data.toString());
 
     lizardProcess.on('close', () => {
         if (error) {
@@ -109,7 +103,7 @@ function runLizardAndDecorate() {
         };
 
         for (const line of lines) {
-            const match = line.match(/^\s*\d+\s+(\d+)\s+(\S+)\s+.*?@(\d+)-\d+@/);
+            const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
             if (match) {
                 const score = parseInt(match[1], 10);
                 const name = match[2];
@@ -119,9 +113,9 @@ function runLizardAndDecorate() {
 
                 const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 100);
                 const decor = { range, hoverMessage: `Complexity: ${score}` };
-                if (score <= 5) {decorations.green.push(decor);}
-                else if (score <= 10) {decorations.yellow.push(decor);}
-                else {decorations.red.push(decor);}
+                if (score <= 5) decorations.green.push(decor);
+                else if (score <= 10) decorations.yellow.push(decor);
+                else decorations.red.push(decor);
             }
         }
 
@@ -135,7 +129,7 @@ function runLizardAndDecorate() {
 
 function showOrUpdateWebView(filePath: string) {
     const data = storedDecorationsPerFile.get(filePath);
-    if (!data) {return;}
+    if (!data) return;
 
     const html = getWebViewContent(data.functions);
     if (webViewPanel) {
@@ -147,13 +141,12 @@ function showOrUpdateWebView(filePath: string) {
             vscode.ViewColumn.Two,
             { enableScripts: true }
         );
-
         webViewPanel.webview.html = html;
 
         webViewPanel.webview.onDidReceiveMessage(
             message => {
                 if (message.command === 'toggleHeatmap') {
-                    vscode.commands.executeCommand('heatmap.toggleHeatmap');
+                    toggleHeatmapFunction();
                 }
             }
         );
@@ -174,7 +167,9 @@ function updateWebView(filePath: string) {
 }
 
 function getWebViewContent(functions: FunctionInfo[]): string {
-    const rows = functions.map(fn => `<tr><td>${fn.name}</td><td>${fn.score}</td><td>${fn.line}</td></tr>`).join('');
+    const rows = functions.map(fn =>
+        `<tr><td>${fn.name}</td><td>${fn.score}</td><td>${fn.line}</td></tr>`
+    ).join('');
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -223,5 +218,3 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
-
-
