@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
+import * as path from 'path';
 
 let heatmapVisible = false;
 let decorationType: vscode.TextEditorDecorationType | undefined;
@@ -80,6 +81,25 @@ function getColorForComplexity(score: number): string {
 }
 
 
+// Detect the platform and get the correct Lizard binary path
+function getLizardBinaryPath(): string {
+    const platform = process.platform;
+
+    let lizardBinaryPath: string;
+
+    if (platform === 'win32') {
+        // For Windows
+        lizardBinaryPath = path.join(__dirname, 'lizard', 'lizard.exe');
+    } else if (platform === 'linux' || platform === 'darwin') {
+        // For Linux and macOS
+        lizardBinaryPath = path.join(__dirname, 'lizard', 'lizard');
+    } else {
+        vscode.window.showErrorMessage('Unsupported platform');
+        throw new Error('Unsupported platform');
+    }
+
+    return lizardBinaryPath;
+}
 
 
 
@@ -103,8 +123,12 @@ function runLizardAndDecorate() {
     if (ext === 'java') {lang = 'java';}
     else if (ext === 'py') {lang = 'python';}
 
-    const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
-    const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
+    // const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
+    // const lizardPath = getLizardBinaryPath();
+    // const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
+    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+    const lizardProcess = spawn(pythonCmd, ['-m', 'lizard', '-l', lang, '-C', '0', filePath]);
+
 
     let output = '';
     let error = '';
