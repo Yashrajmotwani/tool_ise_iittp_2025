@@ -56,6 +56,7 @@ function toggleHeatmapFunction() {
         vscode.window.showInformationMessage(`Heatmap is now ON`);
     }
 
+    
     heatmapVisible = !heatmapVisible;
 }
 
