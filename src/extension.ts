@@ -164,6 +164,7 @@ function runLizardAndDecorate() {
                 else {decorations.red.push(decor);}
             }
         }
+        
 
         storedDecorationsPerFile.set(filePath, decorations);
         heatmapVisible = true;
