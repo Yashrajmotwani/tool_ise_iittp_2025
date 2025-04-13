@@ -107,7 +107,8 @@ function runLizardAndDecorate() {
             const match = line.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+([^\s@]+)@(\d+)-\d+@/);
             if (match) {
                 const rawScore = parseInt(match[1], 10);
-                const score = Math.min(rawScore, 10);
+                // const score = Math.min(rawScore, 10);
+                const score = rawScore;
                 const name = match[2];
                 const lineNum = parseInt(match[3], 10);
                 const key = `${name}@${lineNum}`;
