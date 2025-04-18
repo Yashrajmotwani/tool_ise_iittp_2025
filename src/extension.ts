@@ -3,26 +3,19 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 
 let heatmapVisible = false;
-let decorationType: vscode.TextEditorDecorationType | undefined;
-
-
-let green: vscode.TextEditorDecorationType;
-let yellow: vscode.TextEditorDecorationType;
-let red: vscode.TextEditorDecorationType;
+let blue: vscode.TextEditorDecorationType;
 
 type FunctionInfo = {
     name: string;
     score: number;
-    line: number;       // start line
-    endLine: number;    // end line
-    nloc: number;       // number of lines of code
-    color: string;      // color assigned based on complexity
+    line: number;
+    endLine: number;
+    nloc: number;
+    color: string;
 };
 
 interface FileDecorations {
-    green: vscode.DecorationOptions[];
-    yellow: vscode.DecorationOptions[];
-    red: vscode.DecorationOptions[];
+    blue: vscode.DecorationOptions[];
     functions: FunctionInfo[];
 }
 
@@ -30,24 +23,19 @@ const storedDecorationsPerFile = new Map<string, FileDecorations>();
 let webViewPanel: vscode.WebviewPanel | null = null;
 
 function createDecorationTypes() {
-    green = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(56, 230, 56, 0.4)' });
-    yellow = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(231, 231, 30, 0.4)' });
-    red = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(212, 31, 31, 0.4)' });
+    blue = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(0, 64, 128, 0.88)' // DodgerBlue
+    });
 }
 
 function applyDecorations(editor: vscode.TextEditor) {
     const decorations = storedDecorationsPerFile.get(editor.document.fileName);
     if (!decorations) { return; }
-
-    editor.setDecorations(green, decorations.green);
-    editor.setDecorations(yellow, decorations.yellow);
-    editor.setDecorations(red, decorations.red);
+    editor.setDecorations(blue, decorations.blue);
 }
 
 function clearDecorations(editor: vscode.TextEditor) {
-    editor.setDecorations(green, []);
-    editor.setDecorations(yellow, []);
-    editor.setDecorations(red, []);
+    editor.setDecorations(blue, []);
 }
 
 function toggleHeatmapFunction() {
@@ -62,48 +50,31 @@ function toggleHeatmapFunction() {
         vscode.window.showInformationMessage(`Heatmap is now ON`);
     }
 
-    
     heatmapVisible = !heatmapVisible;
 }
 
 function getColorForComplexity(score: number): string {
-    const maxScore = 25; // Maximum score for Lizard's complexity measure
-    // Normalize the score to be between 0 and 1, considering that score >= 1
+    const maxScore = 25;
     const normalized = Math.min(Math.max((score - 1) / (maxScore - 1), 0), 1);
-
-    // Adjust the color range to make it less bright
-    const r = Math.floor(Math.min(normalized * 150 + 50, 255)); // Red increases as score increases but stays moderate
-    const g = Math.floor(Math.min((1 - normalized) * 150 + 50, 255)); // Green decreases but stays moderate
-    const b = 0; // We will keep blue as 0 to get the green-red range
-
-    // Return a more readable color with lower brightness
+    const r = Math.floor(Math.min(normalized * 150 + 50, 255));
+    const g = Math.floor(Math.min((1 - normalized) * 150 + 50, 255));
+    const b = 0;
     return `rgb(${r}, ${g}, ${b})`;
 }
 
-
-// Detect the platform and get the correct Lizard binary path
 function getLizardBinaryPath(): string {
     const platform = process.platform;
-
     let lizardBinaryPath: string;
-
     if (platform === 'win32') {
-        // For Windows
         lizardBinaryPath = path.join(__dirname, 'lizard', 'lizard.exe');
     } else if (platform === 'linux' || platform === 'darwin') {
-        // For Linux and macOS
         lizardBinaryPath = path.join(__dirname, 'lizard', 'lizard');
     } else {
         vscode.window.showErrorMessage('Unsupported platform');
         throw new Error('Unsupported platform');
     }
-
     return lizardBinaryPath;
 }
-
-
-
-let activeDecorations: vscode.TextEditorDecorationType[] = [];
 
 function runLizardAndDecorate() {
     const editor = vscode.window.activeTextEditor;
@@ -113,52 +84,23 @@ function runLizardAndDecorate() {
     }
 
     const filePath = editor.document.fileName;
-    // const ext = filePath.split('.').pop()?.toLowerCase();
-    // if (!['cpp', 'c', 'java', 'py'].includes(ext ?? '')) {
-    //     vscode.window.showErrorMessage('Unsupported file type.');
-    //     return;
-    // }
-
-    // let lang = 'cpp';
-    // if (ext === 'java') {lang = 'java';}
-    // else if (ext === 'py') {lang = 'python';}
-
     const langMap: Record<string, string> = {
-        'c': 'cpp',
-        'cpp': 'cpp',
-        'cc': 'cpp',
-        'h': 'cpp',
-        'java': 'java',
-        'cs': 'cs',
-        'js': 'javascript',
-        'ts': 'typescript',
-        'py': 'python',
-        'm': 'objc',
-        'mm': 'objc',
-        'swift': 'swift',
-        'rb': 'ruby',
-        'scala': 'scala',
-        'go': 'go',
-        'kt': 'kotlin',
-        'kts': 'kotlin',
-        'rs': 'rust'
+        'c': 'cpp', 'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp',
+        'java': 'java', 'cs': 'cs', 'js': 'javascript', 'ts': 'typescript',
+        'py': 'python', 'm': 'objc', 'mm': 'objc', 'swift': 'swift',
+        'rb': 'ruby', 'scala': 'scala', 'go': 'go', 'kt': 'kotlin',
+        'kts': 'kotlin', 'rs': 'rust'
     };
-    
     const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
     const lang = langMap[ext];
-    
+
     if (!lang) {
         vscode.window.showErrorMessage('Unsupported file type.');
         return;
     }
-    
 
-    // const lizardPath = 'C:\\Users\\dell\\AppData\\Roaming\\Python\\Python313\\Scripts\\lizard.exe';
-    // const lizardPath = getLizardBinaryPath();
-    // const lizardProcess = spawn(lizardPath, ['-l', lang, '-C', '0', filePath]);
     const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
     const lizardProcess = spawn(pythonCmd, ['-m', 'lizard', '-l', lang, '-C', '0', filePath]);
-
 
     let output = '';
     let error = '';
@@ -177,41 +119,35 @@ function runLizardAndDecorate() {
         const uniqueLines = new Set<string>();
 
         const decorations: FileDecorations = {
-            green: [],
-            yellow: [],
-            red: [],
+            blue: [],
             functions
         };
 
         for (const line of lines) {
-            const match = line.match(/^\s*(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+([^\s@]+)@(\d+)-(\d+)@/);
+            const match = line.match(/^(\s*)(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+([^\s@]+)@(\d+)-(\d+)@/);
             if (match) {
-                const nloc = parseInt(match[1], 10);
-                const score = parseInt(match[2], 10);
-                const name = match[3];
-                const startLine = parseInt(match[4], 10);
-                const endLine = parseInt(match[5], 10);
+                const nloc = parseInt(match[2], 10);
+                const score = parseInt(match[3], 10);
+                const name = match[4];
+                const startLine = parseInt(match[5], 10);
+                const endLine = parseInt(match[6], 10);
 
                 const key = `${name}@${startLine}`;
-                if (uniqueLines.has(key)) {continue;}
+                if (uniqueLines.has(key)) { continue; }
                 uniqueLines.add(key);
 
                 const color = getColorForComplexity(score);
-
                 functions.push({ name, score, line: startLine, endLine, nloc, color });
 
                 const range = new vscode.Range(startLine - 1, 0, endLine - 1, 1000);
-                const hoverMessage = `Complexity: ${score}`;
                 const decor: vscode.DecorationOptions = {
-                    range: new vscode.Range(startLine - 1, 0, endLine - 1, 1000),
+                    range,
                     hoverMessage: `Complexity: ${score}`
                 };
-                if (score <= 5) {decorations.green.push(decor);}
-                else if (score <= 8) {decorations.yellow.push(decor);}
-                else {decorations.red.push(decor);}
+
+                decorations.blue.push(decor);
             }
         }
-
 
         storedDecorationsPerFile.set(filePath, decorations);
         heatmapVisible = true;
@@ -220,9 +156,6 @@ function runLizardAndDecorate() {
         showOrUpdateWebView(filePath);
     });
 }
-
-
-
 
 function showOrUpdateWebView(filePath: string) {
     const data = storedDecorationsPerFile.get(filePath);
@@ -290,7 +223,6 @@ function getWebViewContent(functions: FunctionInfo[]): string {
     `;
 }
 
-
 export function activate(context: vscode.ExtensionContext) {
     createDecorationTypes();
 
@@ -313,7 +245,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    if (decorationType) {
-        decorationType.dispose(); // Clean up on extension unload
+    if (blue) {
+        blue.dispose();
     }
 }
