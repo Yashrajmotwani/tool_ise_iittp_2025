@@ -68,24 +68,6 @@ function activate(context) {
         functions.forEach((fn, i) => {
             console.log(`Function ${i + 1}: ${fn.name}`);
         });
-        // const issueDefinitions: Record<string, string> = {
-        //     "Too many if-else statements! Consider using polymorphism.": "https://refactoring.guru/replace-conditional-with-polymorphism",
-        //     "Large switch detected! Consider using the state pattern.": "https://refactoring.guru/state",
-        //     "Nested loops detected! Try early return or breaking into smaller functions.": "https://refactoring.guru/split-loop",
-        //     "Too many parameters! Consider encapsulating them into an object.": "https://refactoring.guru/introduce-parameter-object",
-        //     "Magic numbers detected! Use named constants.": "https://refactoring.guru/replace-magic-number-with-symbolic-constant",
-        //     "Missing semicolons detected!": "",
-        //     "Trailing whitespace detected!": ""
-        // };
-        // const emojiMap: Record<string, string> = {
-        //     "Too many if-else statements! Consider using polymorphism.": "💩",
-        //     "Large switch detected! Consider using the state pattern.": "🌀",
-        //     "Nested loops detected! Try early return or breaking into smaller functions.": "🔁",
-        //     "Too many parameters! Consider encapsulating them into an object.": "📦",
-        //     "Magic numbers detected! Use named constants.": "🔢",
-        //     "Missing semicolons detected!": "❌",
-        //     "Trailing whitespace detected!": "⚠️"
-        // };
         const panel = vscode.window.createWebviewPanel('refactorSuggestions', `Code Review Checklist - ${fileName}`, vscode.ViewColumn.One, { enableScripts: true });
         panel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled');
         panel.webview.onDidReceiveMessage(message => {
@@ -113,8 +95,9 @@ function activate(context) {
         // Emoji decorations
         vscode.workspace.onDidChangeTextDocument(event => {
             const editor = vscode.window.activeTextEditor;
-            if (!editor || event.document !== editor.document)
+            if (!editor || event.document !== editor.document) {
                 return;
+            }
             if (!isCppFile(editor)) {
                 editor.setDecorations(decorationType, []);
                 if (!hasShownWarning) {
@@ -153,8 +136,9 @@ function activate(context) {
             // Check for missing semicolons
             const checkMissingSemicolon = (editor) => {
                 const decorations = [];
-                if (!isCppFile(editor))
+                if (!isCppFile(editor)) {
                     return decorations;
+                }
                 let isInsideBlockComment = false;
                 for (let i = 0; i < editor.document.lineCount; i++) {
                     const line = editor.document.lineAt(i);
@@ -196,8 +180,9 @@ function activate(context) {
             // Check for trailing whitespace
             const checkTrailingWhitespace = (editor) => {
                 const decorations = [];
-                if (!isCppFile(editor))
+                if (!isCppFile(editor)) {
                     return decorations;
+                }
                 let isInsideBlockComment = false;
                 for (let i = 0; i < editor.document.lineCount; i++) {
                     const line = editor.document.lineAt(i);

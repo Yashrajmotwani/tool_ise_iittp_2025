@@ -287,6 +287,58 @@ export function getWebviewContent(fileName: string) {
         .emoji {
             font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
         }
+
+        // In your getWebviewContent function, add these styles
+        .complexity-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .complexity-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .complexity-item {
+            background: var(--card-bg);
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .complexity-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            opacity: 0.2;
+        }
+
+        .complexity-details {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .complexity-name {
+            font-weight: bold;
+            flex: 2;
+        }
+
+        .complexity-score {
+            flex: 1;
+            text-align: center;
+        }
+
+        .complexity-lines {
+            flex: 1;
+            text-align: right;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
@@ -323,10 +375,10 @@ export function getWebviewContent(fileName: string) {
                         <span class="emoji">✅</span> Mark Complete
                     </button>
                 </li>
-                <li class="task-item" data-task="formatting">
+                <li class="task-item" data-task="complexity">
                     <label>Generate Code Complexity Report</label>
-                    <button class="btn btn-outline" onclick="completeTask('formatting')">
-                        <span class="emoji">✅</span> Mark Complete
+                    <button class="btn" onclick="checkComplexity()">
+                        <span class="emoji">📊</span> Analyze Complexity
                     </button>
                 </li>
                 <li class="task-item" data-task="comments">
@@ -343,6 +395,30 @@ export function getWebviewContent(fileName: string) {
             <div id="refactor-summary"></div>
             <div id="refactor-list"></div>
         </div>
+    </div>
+
+    <div class="section hidden" id="complexity-section">
+        <h2><span class="emoji">📊</span> Code Complexity Report</h2>
+        <div class="complexity-summary">
+            <div class="complexity-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-functions">0</div>
+                    <div class="stat-label">Total Functions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="high-complexity">0</div>
+                    <div class="stat-label">High Complexity (>15)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avg-complexity">0</div>
+                    <div class="stat-label">Avg Complexity</div>
+                </div>
+            </div>
+            <button class="btn" onclick="toggleHeatmap()">
+                <span class="emoji" id="heatmap-icon">👁️</span> Toggle Heatmap
+            </button>
+        </div>
+        <div id="complexity-list"></div>
     </div>
 
     <script>
@@ -380,13 +456,20 @@ export function getWebviewContent(fileName: string) {
             completeTask('refactor');
             vscode.postMessage({ command: 'checkRefactor' });
         }
-        
+
+        function checkComplexity() {
+            completeTask('complexity');
+            vscode.postMessage({ command: 'checkComplexity' });
+        }
+
+        function toggleHeatmap() {
+            const icon = document.getElementById('heatmap-icon');
+            vscode.postMessage({ command: 'toggleHeatmap' });
+            icon.textContent = icon.textContent === '👁️' ? '👁️‍🗨️' : '👁️';
+        }
+                
         function runTests() {
             vscode.postMessage({ command: 'runTests' });
-        }
-        
-        function checkFormatting() {
-            vscode.postMessage({ command: 'checkFormatting' });
         }
         
         function checkComments() {
@@ -395,6 +478,7 @@ export function getWebviewContent(fileName: string) {
         
         window.addEventListener('message', event => {
             const message = event.data;
+
             if (message.command === 'displayRefactor') {
                 const section = document.getElementById('refactor-section');
                 const list = document.getElementById('refactor-list');
@@ -411,7 +495,22 @@ export function getWebviewContent(fileName: string) {
                 if (message.content.functionCount !== undefined) {
                     document.getElementById('function-count').textContent = message.content.functionCount;
                 }
+            }
+
+            if (message.command === 'displayComplexity') {
+                const section = document.getElementById('complexity-section');
+                const list = document.getElementById('complexity-list');
                 
+                section.classList.remove('hidden');
+                list.innerHTML = message.content.html;
+                
+                // Update stats
+                document.getElementById('total-functions').textContent = message.content.totalFunctions;
+                document.getElementById('high-complexity').textContent = message.content.highComplexity;
+                document.getElementById('avg-complexity').textContent = message.content.avgComplexity;
+                
+                // Scroll to the complexity section
+                section.scrollIntoView({ behavior: 'smooth' });
             }
         });
     </script>
