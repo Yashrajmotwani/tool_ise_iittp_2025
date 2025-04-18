@@ -38,7 +38,6 @@ This VS Code extension integrates static code analysis using **Lizard** to visua
 | Java          | `.java`                      |
 | C#            | `.cs`                        |
 | JavaScript    | `.js`                        |
-| TypeScript    | `.ts`                        |
 | Python        | `.py`                        |
 | Objective-C   | `.m`, `.mm`                  |
 | Swift         | `.swift`                     |
