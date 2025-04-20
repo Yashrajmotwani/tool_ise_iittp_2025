@@ -367,20 +367,30 @@ function getWebviewContent(fileName) {
             <ul class="task-list" id="pre-review-tasks">
                 <li class="task-item" data-task="refactor">
                     <label>Check for refactoring opportunities</label>
-                    <button class="btn" onclick="checkRefactor()">
-                        <span class="emoji">🔍</span> Analyze Code
-                    </button>
+                    <div style="display: flex; gap: 10px; margin-top: 6px;">
+                        <button class="btn" onclick="checkRefactor()">
+                            <span class="emoji">🔍</span> Analyze Code
+                        </button>
+                        <button class="btn btn-outline" onclick="completeTask('refactor')">
+                            <span class="emoji">✅</span> Mark Complete
+                        </button>
+                    </div>
+                </li>
+                <li class="task-item" data-task="complexity">
+                    <label>Generate Code Complexity Report</label>
+                    <div style="display: flex; gap: 10px; margin-top: 6px;">
+                        <button class="btn" onclick="checkComplexity()">
+                            <span class="emoji">📊</span> Analyze Complexity
+                        </button>
+                        <button class="btn btn-outline" onclick="completeTask('complexity')">
+                                <span class="emoji">✅</span> Mark Complete
+                        </button>
+                    </div>
                 </li>
                 <li class="task-item" data-task="tests">
                     <label>Check Code Time Complexity</label>
                     <button class="btn btn-outline" onclick="completeTask('tests')">
                         <span class="emoji">✅</span> Mark Complete
-                    </button>
-                </li>
-                <li class="task-item" data-task="complexity">
-                    <label>Generate Code Complexity Report</label>
-                    <button class="btn" onclick="checkComplexity()">
-                        <span class="emoji">📊</span> Analyze Complexity
                     </button>
                 </li>
                 <li class="task-item" data-task="comments">
@@ -435,7 +445,6 @@ function getWebviewContent(fileName) {
         }
         
         function checkRefactor() {
-            completeTask('refactor');
             vscode.postMessage({ 
                 command: 'resetAndShow',
                 show: 'refactor'
@@ -444,7 +453,6 @@ function getWebviewContent(fileName) {
         }
 
         function checkComplexity() {
-            completeTask('complexity');
             vscode.postMessage({ 
                 command: 'resetAndShow',
                 show: 'complexity'
