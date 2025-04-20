@@ -12,8 +12,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:code-review-helper.detectFunctions",
-    "onCommand:code-review-helper.toggleHeatmap"
+    "onCommand:code-review-helper.detectFunctions"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -21,6 +20,18 @@
       {
         "command": "code-review-helper.detectFunctions",
         "title": "Code Review Helper: Detect Functions"
+      },
+      {
+        "command": "heatmap.analyzeComplexity",
+        "title": "Analyze Code Complexity (Heatmap)"
+      },
+      {
+        "command": "heatmap.toggleHeatmap",
+        "title": "Toggle Heatmap"
+      },
+      {
+        "command": "heatmap.openWebView",
+        "title": "Open Heatmap WebView"
       }
     ]
   },
