@@ -7,10 +7,13 @@
     "vscode": "^1.99.0"
   },
   "categories": [
+    "Programming Languages",
+    "Linters",
     "Other"
   ],
   "activationEvents": [
-    "onCommand:code-review-helper.detectFunctions"
+    "onCommand:code-review-helper.detectFunctions",
+    "onCommand:code-review-helper.toggleHeatmap"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -37,5 +40,11 @@
     "@vscode/test-electron": "^2.4.1",
     "eslint": "^9.23.0",
     "typescript": "^5.8.2"
-  }
+  },
+  "dependencies": {
+    "lizard": "^1.0.0"
+  },
+  "extensionDependencies": [
+    "ms-python.python"
+  ]
 }

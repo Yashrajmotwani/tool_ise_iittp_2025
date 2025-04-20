@@ -397,30 +397,6 @@ export function getWebviewContent(fileName: string) {
         </div>
     </div>
 
-    <div class="section hidden" id="complexity-section">
-        <h2><span class="emoji">📊</span> Code Complexity Report</h2>
-        <div class="complexity-summary">
-            <div class="complexity-stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="total-functions">0</div>
-                    <div class="stat-label">Total Functions</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="high-complexity">0</div>
-                    <div class="stat-label">High Complexity (>15)</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="avg-complexity">0</div>
-                    <div class="stat-label">Avg Complexity</div>
-                </div>
-            </div>
-            <button class="btn" onclick="toggleHeatmap()">
-                <span class="emoji" id="heatmap-icon">👁️</span> Toggle Heatmap
-            </button>
-        </div>
-        <div id="complexity-list"></div>
-    </div>
-
     <script>
         const vscode = acquireVsCodeApi();
         let completedTasks = 0;
@@ -461,12 +437,6 @@ export function getWebviewContent(fileName: string) {
             completeTask('complexity');
             vscode.postMessage({ command: 'checkComplexity' });
         }
-
-        function toggleHeatmap() {
-            const icon = document.getElementById('heatmap-icon');
-            vscode.postMessage({ command: 'toggleHeatmap' });
-            icon.textContent = icon.textContent === '👁️' ? '👁️‍🗨️' : '👁️';
-        }
                 
         function runTests() {
             vscode.postMessage({ command: 'runTests' });
@@ -497,21 +467,6 @@ export function getWebviewContent(fileName: string) {
                 }
             }
 
-            if (message.command === 'displayComplexity') {
-                const section = document.getElementById('complexity-section');
-                const list = document.getElementById('complexity-list');
-                
-                section.classList.remove('hidden');
-                list.innerHTML = message.content.html;
-                
-                // Update stats
-                document.getElementById('total-functions').textContent = message.content.totalFunctions;
-                document.getElementById('high-complexity').textContent = message.content.highComplexity;
-                document.getElementById('avg-complexity').textContent = message.content.avgComplexity;
-                
-                // Scroll to the complexity section
-                section.scrollIntoView({ behavior: 'smooth' });
-            }
         });
     </script>
 </body>
@@ -652,92 +607,5 @@ const refactorRules = [
     return {
         html: refactorHTML,
         issueCount: totalIssues,
-    };
-}
-
-
-export function getRefactorHTMLContent2(
-    functions: {name: string, body: string}[],
-    issueDefinitions: Record<string, string>,
-    emojiMap: Record<string, string>
-) {
-    let refactorHTML = '';
-    let functionIssues: Record<string, { issues: string[], links: string[] }> = {};
-    let totalIssues = 0;
-
-    functions.forEach(func => {
-        const functionName = func.name;
-        const body = func.body;
-        const detectedIssues = new Set<string>();
-
-        if ((body.match(/\bif\s*\(.*\)\s*\{/g) || []).length > 3) {
-            detectedIssues.add("Too many if-else statements! Consider using polymorphism.");
-        }
-        if ((body.match(/\bswitch\s*\(.*?\)\s*\{[^}]*case[^}]*case[^}]*case/g) || []).length > 0) {
-            detectedIssues.add("Large switch detected! Consider using the state pattern.");
-        }
-        if ((body.match(/\b(for|while)\s*\(.*?\)\s*\{[^}]*\b(for|while)\s*\(.*?\)/g) || []).length > 0) {
-            detectedIssues.add("Nested loops detected! Try early return or breaking into smaller functions.");
-        }
-        if ((func.body.match(/,/g) || []).length > 4) {
-            detectedIssues.add("Too many parameters! Consider encapsulating them into an object.");
-        }
-        const magicNumberPattern = /\b(?!case\s+)(?!return\s+)(?!default\s+)(\d+)\b/g;
-        if ((body.match(magicNumberPattern) || []).length > 0) {
-            detectedIssues.add("Magic numbers detected! Use named constants.");
-        }
-
-        if (detectedIssues.size > 0) {
-            functionIssues[functionName] = { 
-                issues: Array.from(detectedIssues), 
-                links: Array.from(detectedIssues).map(issue => issueDefinitions[issue])
-            };
-            totalIssues += detectedIssues.size;
-        }
-    });
-
-    for (const [funcName, data] of Object.entries(functionIssues)) {
-        refactorHTML += `
-        <div class="function-card">
-            <div class="function-name">
-                <span class="emoji">🧩</span> ${funcName}
-                <span class="status-badge badge-error">${data.issues.length} issues</span>
-            </div>
-            <ul class="issue-list">`;
-        
-        data.issues.forEach((issue, index) => {
-            const emoji = emojiMap[issue] || '⚠️';
-            refactorHTML += `
-            <li class="issue-item">
-                <div class="issue-title">
-                    <span class="issue-icon emoji">${emoji}</span> 
-                    ${issue}
-                </div>
-                <div class="issue-solution">
-                    <strong>Solution:</strong> 
-                    <a class="refactor-link" href="${data.links[index]}" target="_blank">
-                        Learn more about this refactoring
-                        <span class="emoji">🔗</span>
-                    </a>
-                </div>
-            </li>`;
-        });
-        
-        refactorHTML += `</ul></div>`;
-    }
-
-    if (refactorHTML === '') {
-        refactorHTML = `
-        <div class="function-card">
-            <div class="function-name">
-                <span class="emoji">🎉</span> No issues detected
-            </div>
-            <p>Great job! No major code smells detected in your functions.</p>
-        </div>`;
-    }
-
-    return {
-        html: refactorHTML,
-        issueCount: totalIssues
     };
 }
