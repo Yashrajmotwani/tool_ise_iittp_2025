@@ -22,10 +22,6 @@
         "title": "Code Review Helper: Detect Functions"
       },
       {
-        "command": "heatmap.analyzeComplexity",
-        "title": "Analyze Code Complexity (Heatmap)"
-      },
-      {
         "command": "heatmap.toggleHeatmap",
         "title": "Toggle Heatmap"
       },

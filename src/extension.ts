@@ -2,6 +2,8 @@
 import * as vscode from 'vscode';
 import { getWebviewContent, getRefactorHTMLContent } from './webviewContent';
 import { CodeEmotion } from './codeEmotion';
+import { spawn } from 'child_process';
+import * as path from 'path';
 
 const isCppFile = (editor: vscode.TextEditor) => {
     const languageId = editor.document.languageId;
@@ -10,9 +12,7 @@ const isCppFile = (editor: vscode.TextEditor) => {
 
 let codeEmotion: CodeEmotion;
 let lastActiveEditor: vscode.TextEditor | undefined;
-
-import { spawn } from 'child_process';
-import * as path from 'path';
+let currentPanel: vscode.WebviewPanel | undefined;
 
 let heatmapVisible = false;
 let blue: vscode.TextEditorDecorationType;
@@ -32,11 +32,10 @@ interface FileDecorations {
 }
 
 const storedDecorationsPerFile = new Map<string, FileDecorations>();
-let webViewPanel: vscode.WebviewPanel | null = null;
 
 function createDecorationTypes() {
     blue = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(0, 64, 128, 0.88)' // DodgerBlue
+        backgroundColor: 'rgba(0, 64, 128, 0.88)'
     });
 }
 
@@ -57,24 +56,13 @@ function toggleHeatmapFunction() {
     const filePath = editor.document.fileName;
     const decorations = storedDecorationsPerFile.get(filePath);
     
-    // Case: No heatmap data exists, whether from editor or webview panel
     if (!decorations) {
         vscode.window.showWarningMessage(
-            'Heatmap data not found yet. Please run "Analyze Complexity" from the Code Review Checklist panel first.'
-        );
-        return;
-    }
-    
-    // Case: Heatmap exists and the user is running the toggle from the panel
-    const check2 = storedDecorationsPerFile.has(filePath);
-    if (!check2) {
-        vscode.window.showWarningMessage(
-            'Please run "Toggle Heatmap" from the editor.'
+            'Heatmap data not found yet. Please run "Analyze Complexity" first.'
         );
         return;
     }
 
-    // Toggle heatmap visibility
     if (heatmapVisible) {
         clearDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now OFF`);
@@ -98,7 +86,7 @@ function getColorForComplexity(score: number): string {
 function runLizardAndDecorate() {
     const editor = lastActiveEditor;
     if (!editor) {
-        vscode.window.showErrorMessage('No previously active editor found');
+        vscode.window.showErrorMessage('No active editor found');
         return;
     }
 
@@ -170,8 +158,25 @@ function runLizardAndDecorate() {
 
         storedDecorationsPerFile.set(filePath, decorations);
         heatmapVisible = false;
-        // applyDecorations(editor);
-        vscode.window.showInformationMessage(`Run "Toggle Heatmap" from the Editor.`);
+
+        console.log("Functions to display:", functions);
+
+        if (currentPanel) {
+            const tableData = functions.map(f => ({
+                functionName: f.name,
+                complexity: f.score,
+                loc: f.nloc,
+                location: `Lines ${f.line}-${f.endLine}`
+            }));
+            
+            console.log("Sending data to panel:", tableData);
+            currentPanel.webview.postMessage({
+                command: 'displayComplexity',
+                data: tableData
+            });
+        } else {
+            vscode.window.showErrorMessage("Analysis panel is not open. Please open the Code Review Checklist first.");
+        }
     });
 }
 
@@ -186,9 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // runLizardAndDecorate();
         lastActiveEditor = editor;
-
         const document = editor.document;
         const text = document.getText();
         const fileName = document.fileName.split(/[\\/]/).pop();
@@ -201,16 +204,19 @@ export function activate(context: vscode.ExtensionContext) {
             functions.push({ name: match[1], body: match[3] });
         }
 
-        const panel = vscode.window.createWebviewPanel(
+        currentPanel = vscode.window.createWebviewPanel(
             'refactorSuggestions',
             `Code Review Checklist - ${fileName}`,
             vscode.ViewColumn.One,
-            { enableScripts: true }
+            { 
+                enableScripts: true,
+                retainContextWhenHidden: true
+            }
         );
 
-        panel.webview.html = getWebviewContent(fileName || 'Untitled');
+        currentPanel.webview.html = getWebviewContent(fileName || 'Untitled');
 
-        panel.webview.onDidReceiveMessage(
+        currentPanel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
                     case 'checkRefactor':
@@ -221,8 +227,13 @@ export function activate(context: vscode.ExtensionContext) {
                             );
                             return;
                         }
+                        // Clear and show only refactor section
+                        currentPanel?.webview.postMessage({
+                            command: 'resetAndShow',
+                            show: 'refactor'
+                        });
                         const refactorContent = getRefactorHTMLContent(functions);
-                        panel.webview.postMessage({
+                        currentPanel?.webview.postMessage({
                             command: 'displayRefactor',
                             content: {
                                 html: refactorContent.html,
@@ -232,6 +243,11 @@ export function activate(context: vscode.ExtensionContext) {
                         break;
                         
                     case 'analyzeComplexity':
+                        // Clear and show only complexity section
+                        currentPanel?.webview.postMessage({
+                            command: 'resetAndShow',
+                            show: 'complexity'
+                        });
                         runLizardAndDecorate();
                         break;
                     
@@ -244,19 +260,16 @@ export function activate(context: vscode.ExtensionContext) {
             context.subscriptions
         );
 
-        // Emoji decorations
         vscode.workspace.onDidChangeTextDocument(event => {
             const editor = vscode.window.activeTextEditor;
             if (!editor || event.document !== editor.document) {
                 return;
             }
-
             codeEmotion.updateEmojiDecorations(editor, fileName || 'Untitled');
         });
     });
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('heatmap.analyzeComplexity', () => runLizardAndDecorate()),
         vscode.commands.registerCommand('heatmap.toggleHeatmap', () => toggleHeatmapFunction())
     );
 
@@ -269,5 +282,8 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
     if (blue) {
         blue.dispose();
+    }
+    if (currentPanel) {
+        currentPanel.dispose();
     }
 }

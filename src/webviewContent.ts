@@ -220,7 +220,7 @@ export function getWebviewContent(fileName: string) {
         }
         
         .hidden {
-            display: none;
+            display: none !important;
         }
         
         .progress-container {
@@ -395,6 +395,10 @@ export function getWebviewContent(fileName: string) {
             <div id="refactor-summary"></div>
             <div id="refactor-list"></div>
         </div>
+        <div class="section hidden" id="complexity-section">
+            <h2><span class="emoji">📊</span> Code Complexity Report</h2>
+            <div id="complexity-table"></div>
+        </div>
     </div>
 
     <script>
@@ -430,11 +434,19 @@ export function getWebviewContent(fileName: string) {
         
         function checkRefactor() {
             completeTask('refactor');
+            vscode.postMessage({ 
+                command: 'resetAndShow',
+                show: 'refactor'
+            });
             vscode.postMessage({ command: 'checkRefactor' });
         }
 
         function checkComplexity() {
             completeTask('complexity');
+            vscode.postMessage({ 
+                command: 'resetAndShow',
+                show: 'complexity'
+            });
             vscode.postMessage({ command: 'analyzeComplexity' });
         }
                 
@@ -445,11 +457,86 @@ export function getWebviewContent(fileName: string) {
         function checkComments() {
             vscode.postMessage({ command: 'checkComments' });
         }
+
+        function escapeHtml(unsafe) {
+            return unsafe?.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;") || "";
+        }
+
+        function displayComplexityTable(data) {
+
+            console.log("WEBVIEW: Received data for table:", data);
+
+            const section = document.getElementById('complexity-section');
+            console.log("WEBVIEW: Section element:", section);
+            const tableContainer = document.getElementById('complexity-table');
+            
+            if (!data || data.length === 0) {
+                console.warn("No complexity data received");
+                tableContainer.innerHTML = '<p>No complexity data found</p>';
+                section.classList.remove('hidden');
+                section.style.display = 'block';
+                return;
+            }
+
+            let tableHTML = 
+                '<table style="width: 100%; border-collapse: collapse;" border="1">' +
+                    '<thead>' +
+                        '<tr>' +
+                            '<th>Function Name</th>' +
+                            '<th>Complexity</th>' +
+                            '<th>Lines of Code</th>' +
+                            '<th>Location</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+            data.forEach(item => {
+                tableHTML += 
+                    '<tr>' +
+                        '<td>' + escapeHtml(item.functionName) + '</td>' +
+                        '<td>' + escapeHtml(item.complexity) + '</td>' +
+                        '<td>' + escapeHtml(item.loc) + '</td>' +
+                        '<td>' + escapeHtml(item.location) + '</td>' +
+                    '</tr>'
+            });
+
+            tableHTML += '</tbody></table>';
+            section.classList.remove('hidden');
+            tableContainer.innerHTML = tableHTML;
+            
+            console.log("Table rendered successfully");
+
+            // Scroll to the complexity section
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+
         
         window.addEventListener('message', event => {
             const message = event.data;
 
-            if (message.command === 'displayRefactor') {
+            if (message.command === 'resetAndShow') {
+                const refactorSection = document.getElementById('refactor-section');
+                const complexitySection = document.getElementById('complexity-section');
+
+                // Hide both using classList
+                refactorSection?.classList.add('hidden');
+                complexitySection?.classList.add('hidden');
+
+                // Show requested section using classList
+                if (message.show === 'refactor') {
+                    refactorSection.classList.remove('hidden');
+                } 
+                else if (message.show === 'complexity') {
+                    complexitySection.classList.remove('hidden');
+                }
+            }
+
+            else if (message.command === 'displayRefactor') {
                 const section = document.getElementById('refactor-section');
                 const list = document.getElementById('refactor-list');
                 const summary = document.getElementById('refactor-summary');
@@ -465,6 +552,11 @@ export function getWebviewContent(fileName: string) {
                 if (message.content.functionCount !== undefined) {
                     document.getElementById('function-count').textContent = message.content.functionCount;
                 }
+            }
+            
+            else if (message.command === 'displayComplexity') {
+                console.log("WEBVIEW: Processing complexity data");
+                displayComplexityTable(message.data);
             }
 
         });
