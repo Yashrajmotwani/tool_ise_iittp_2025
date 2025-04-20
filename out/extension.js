@@ -44,6 +44,7 @@ const isCppFile = (editor) => {
     return languageId === 'c' || languageId === 'cpp';
 };
 let codeEmotion;
+let lastActiveEditor;
 const child_process_1 = require("child_process");
 let heatmapVisible = false;
 let blue;
@@ -69,6 +70,20 @@ function toggleHeatmapFunction() {
     if (!editor) {
         return;
     }
+    const filePath = editor.document.fileName;
+    const decorations = storedDecorationsPerFile.get(filePath);
+    // Case: No heatmap data exists, whether from editor or webview panel
+    if (!decorations) {
+        vscode.window.showWarningMessage('Heatmap data not found yet. Please run "Analyze Complexity" from the Code Review Checklist panel first.');
+        return;
+    }
+    // Case: Heatmap exists and the user is running the toggle from the panel
+    const check2 = storedDecorationsPerFile.has(filePath);
+    if (!check2) {
+        vscode.window.showWarningMessage('Please run "Toggle Heatmap" from the editor.');
+        return;
+    }
+    // Toggle heatmap visibility
     if (heatmapVisible) {
         clearDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now OFF`);
@@ -88,9 +103,9 @@ function getColorForComplexity(score) {
     return `rgb(${r}, ${g}, ${b})`;
 }
 function runLizardAndDecorate() {
-    const editor = vscode.window.activeTextEditor;
+    const editor = lastActiveEditor;
     if (!editor) {
-        vscode.window.showErrorMessage('No active editor');
+        vscode.window.showErrorMessage('No previously active editor found');
         return;
     }
     const filePath = editor.document.fileName;
@@ -149,9 +164,9 @@ function runLizardAndDecorate() {
             }
         }
         storedDecorationsPerFile.set(filePath, decorations);
-        heatmapVisible = true;
-        applyDecorations(editor);
-        vscode.window.showInformationMessage(`Heatmap is now ON`);
+        heatmapVisible = false;
+        // applyDecorations(editor);
+        vscode.window.showInformationMessage(`Run "Toggle Heatmap" from the Editor.`);
     });
 }
 function activate(context) {
@@ -163,6 +178,8 @@ function activate(context) {
             vscode.window.showErrorMessage('No active text editor found!');
             return;
         }
+        // runLizardAndDecorate();
+        lastActiveEditor = editor;
         const document = editor.document;
         const text = document.getText();
         const fileName = document.fileName.split(/[\\/]/).pop();
@@ -189,6 +206,9 @@ function activate(context) {
                             issueCount: refactorContent.issueCount
                         }
                     });
+                    break;
+                case 'analyzeComplexity':
+                    runLizardAndDecorate();
                     break;
                 case 'completeTask':
                     vscode.window.showInformationMessage(`Task completed: ${message.task}`);

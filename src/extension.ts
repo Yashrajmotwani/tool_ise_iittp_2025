@@ -9,6 +9,7 @@ const isCppFile = (editor: vscode.TextEditor) => {
 };
 
 let codeEmotion: CodeEmotion;
+let lastActiveEditor: vscode.TextEditor | undefined;
 
 import { spawn } from 'child_process';
 import * as path from 'path';
@@ -53,6 +54,27 @@ function toggleHeatmapFunction() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
 
+    const filePath = editor.document.fileName;
+    const decorations = storedDecorationsPerFile.get(filePath);
+    
+    // Case: No heatmap data exists, whether from editor or webview panel
+    if (!decorations) {
+        vscode.window.showWarningMessage(
+            'Heatmap data not found yet. Please run "Analyze Complexity" from the Code Review Checklist panel first.'
+        );
+        return;
+    }
+    
+    // Case: Heatmap exists and the user is running the toggle from the panel
+    const check2 = storedDecorationsPerFile.has(filePath);
+    if (!check2) {
+        vscode.window.showWarningMessage(
+            'Please run "Toggle Heatmap" from the editor.'
+        );
+        return;
+    }
+
+    // Toggle heatmap visibility
     if (heatmapVisible) {
         clearDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now OFF`);
@@ -74,9 +96,9 @@ function getColorForComplexity(score: number): string {
 }
 
 function runLizardAndDecorate() {
-    const editor = vscode.window.activeTextEditor;
+    const editor = lastActiveEditor;
     if (!editor) {
-        vscode.window.showErrorMessage('No active editor');
+        vscode.window.showErrorMessage('No previously active editor found');
         return;
     }
 
@@ -147,9 +169,9 @@ function runLizardAndDecorate() {
         }
 
         storedDecorationsPerFile.set(filePath, decorations);
-        heatmapVisible = true;
-        applyDecorations(editor);
-        vscode.window.showInformationMessage(`Heatmap is now ON`);
+        heatmapVisible = false;
+        // applyDecorations(editor);
+        vscode.window.showInformationMessage(`Run "Toggle Heatmap" from the Editor.`);
     });
 }
 
@@ -163,6 +185,9 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('No active text editor found!');
             return;
         }
+
+        // runLizardAndDecorate();
+        lastActiveEditor = editor;
 
         const document = editor.document;
         const text = document.getText();
@@ -206,6 +231,10 @@ export function activate(context: vscode.ExtensionContext) {
                         });
                         break;
                         
+                    case 'analyzeComplexity':
+                        runLizardAndDecorate();
+                        break;
+                    
                     case 'completeTask':
                         vscode.window.showInformationMessage(`Task completed: ${message.task}`);
                         break;

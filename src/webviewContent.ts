@@ -435,7 +435,7 @@ export function getWebviewContent(fileName: string) {
 
         function checkComplexity() {
             completeTask('complexity');
-            vscode.postMessage({ command: 'checkComplexity' });
+            vscode.postMessage({ command: 'analyzeComplexity' });
         }
                 
         function runTests() {
