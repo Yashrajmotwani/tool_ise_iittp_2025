@@ -47,6 +47,7 @@ const isCppFile = (editor) => {
 let codeEmotion;
 let lastActiveEditor;
 let currentPanel;
+const activePanels = new Map();
 let heatmapVisible = false;
 let blue;
 const storedDecorationsPerFile = new Map();
@@ -188,6 +189,7 @@ function activate(context) {
         lastActiveEditor = editor;
         const document = editor.document;
         const text = document.getText();
+        const filePath = document.fileName;
         const fileName = document.fileName.split(/[\\/]/).pop();
         const functionRegex = /(?:(?:int|void|float|double|char|string|bool)\s+)?(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g;
         let functions = [];
@@ -195,11 +197,21 @@ function activate(context) {
         while ((match = functionRegex.exec(text)) !== null) {
             functions.push({ name: match[1], body: match[3] });
         }
-        currentPanel = vscode.window.createWebviewPanel('refactorSuggestions', `Code Review Checklist - ${fileName}`, vscode.ViewColumn.One, {
+        // Check if a panel for this file already exists
+        const existingPanel = activePanels.get(filePath);
+        if (existingPanel) {
+            existingPanel.reveal();
+            currentPanel = existingPanel;
+            return;
+        }
+        const panel = vscode.window.createWebviewPanel('refactorSuggestions', `Code Review Checklist - ${fileName}`, vscode.ViewColumn.One, {
             enableScripts: true,
             retainContextWhenHidden: true
         });
-        currentPanel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled');
+        panel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled');
+        currentPanel = panel;
+        // Store panel reference
+        activePanels.set(filePath, panel);
         currentPanel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'checkRefactor':

@@ -447,7 +447,9 @@ export function getWebviewContent(fileName: string) {
                 command: 'resetAndShow',
                 show: 'refactor'
             });
-            vscode.postMessage({ command: 'checkRefactor' });
+            vscode.postMessage({ 
+                command: 'checkRefactor' 
+            });
         }
 
         function checkComplexity() {
@@ -455,7 +457,9 @@ export function getWebviewContent(fileName: string) {
                 command: 'resetAndShow',
                 show: 'complexity'
             });
-            vscode.postMessage({ command: 'analyzeComplexity' });
+            vscode.postMessage({ 
+                command: 'analyzeComplexity'
+            });
         }
                 
         function runTests() {

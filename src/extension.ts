@@ -14,6 +14,8 @@ let codeEmotion: CodeEmotion;
 let lastActiveEditor: vscode.TextEditor | undefined;
 let currentPanel: vscode.WebviewPanel | undefined;
 
+const activePanels = new Map<string, vscode.WebviewPanel>();
+
 let heatmapVisible = false;
 let blue: vscode.TextEditorDecorationType;
 
@@ -194,6 +196,7 @@ export function activate(context: vscode.ExtensionContext) {
         lastActiveEditor = editor;
         const document = editor.document;
         const text = document.getText();
+        const filePath = document.fileName;
         const fileName = document.fileName.split(/[\\/]/).pop();
 
         const functionRegex = /(?:(?:int|void|float|double|char|string|bool)\s+)?(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g;
@@ -204,7 +207,15 @@ export function activate(context: vscode.ExtensionContext) {
             functions.push({ name: match[1], body: match[3] });
         }
 
-        currentPanel = vscode.window.createWebviewPanel(
+        // Check if a panel for this file already exists
+        const existingPanel = activePanels.get(filePath);
+        if (existingPanel) {
+            existingPanel.reveal();
+            currentPanel = existingPanel;
+            return;
+        }
+
+        const panel = vscode.window.createWebviewPanel(
             'refactorSuggestions',
             `Code Review Checklist - ${fileName}`,
             vscode.ViewColumn.One,
@@ -214,8 +225,13 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
 
-        currentPanel.webview.html = getWebviewContent(fileName || 'Untitled');
+        panel.webview.html = getWebviewContent(fileName || 'Untitled');
 
+        currentPanel = panel;
+
+        // Store panel reference
+        activePanels.set(filePath, panel);
+        
         currentPanel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
