@@ -46,7 +46,7 @@ const isCppFile = (editor) => {
 };
 let codeEmotion;
 let lastActiveEditor;
-let currentPanel;
+// let currentPanel: vscode.WebviewPanel | undefined;
 const activePanels = new Map();
 let heatmapVisible = false;
 let blue;
@@ -95,7 +95,7 @@ function getColorForComplexity(score) {
     const b = 0;
     return `rgb(${r}, ${g}, ${b})`;
 }
-function runLizardAndDecorate() {
+function runLizardAndDecorate(panel) {
     const editor = lastActiveEditor;
     if (!editor) {
         vscode.window.showErrorMessage('No active editor found');
@@ -159,7 +159,7 @@ function runLizardAndDecorate() {
         storedDecorationsPerFile.set(filePath, decorations);
         heatmapVisible = false;
         console.log("Functions to display:", functions);
-        if (currentPanel) {
+        if (panel) {
             const tableData = functions.map(f => ({
                 functionName: f.name,
                 complexity: f.score,
@@ -167,7 +167,7 @@ function runLizardAndDecorate() {
                 location: `Lines ${f.line}-${f.endLine}`
             }));
             console.log("Sending data to panel:", tableData);
-            currentPanel.webview.postMessage({
+            panel.webview.postMessage({
                 command: 'displayComplexity',
                 data: tableData
             });
@@ -201,18 +201,22 @@ function activate(context) {
         const existingPanel = activePanels.get(filePath);
         if (existingPanel) {
             existingPanel.reveal();
-            currentPanel = existingPanel;
             return;
         }
         const panel = vscode.window.createWebviewPanel('refactorSuggestions', `Code Review Checklist - ${fileName}`, vscode.ViewColumn.One, {
             enableScripts: true,
             retainContextWhenHidden: true
         });
-        panel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled');
-        currentPanel = panel;
-        // Store panel reference
+        // panel.webview.html = getWebviewContent(fileName || 'Untitled');
+        // currentPanel = panel;
+        // Add panel to tracking map
         activePanels.set(filePath, panel);
-        currentPanel.webview.onDidReceiveMessage(message => {
+        // Handle panel disposal
+        panel.onDidDispose(() => {
+            activePanels.delete(filePath);
+        }, null, context.subscriptions);
+        panel.webview.html = (0, webviewContent_1.getWebviewContent)(fileName || 'Untitled');
+        panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'checkRefactor':
                     if (!isCppFile(editor)) {
@@ -220,12 +224,12 @@ function activate(context) {
                         return;
                     }
                     // Clear and show only refactor section
-                    currentPanel?.webview.postMessage({
+                    panel?.webview.postMessage({
                         command: 'resetAndShow',
                         show: 'refactor'
                     });
                     const refactorContent = (0, webviewContent_1.getRefactorHTMLContent)(functions);
-                    currentPanel?.webview.postMessage({
+                    panel?.webview.postMessage({
                         command: 'displayRefactor',
                         content: {
                             html: refactorContent.html,
@@ -235,11 +239,11 @@ function activate(context) {
                     break;
                 case 'analyzeComplexity':
                     // Clear and show only complexity section
-                    currentPanel?.webview.postMessage({
+                    panel?.webview.postMessage({
                         command: 'resetAndShow',
                         show: 'complexity'
                     });
-                    runLizardAndDecorate();
+                    runLizardAndDecorate(panel);
                     break;
                 case 'completeTask':
                     vscode.window.showInformationMessage(`Task completed: ${message.task}`);
@@ -260,12 +264,27 @@ function activate(context) {
     });
     context.subscriptions.push(disposable);
 }
+// export function deactivate() {
+//     if (blue) {
+//         blue.dispose();
+//     }
+//     if (currentPanel) {
+//         currentPanel.dispose();
+//     }
+// }
 function deactivate() {
+    // Dispose of the decoration type
     if (blue) {
         blue.dispose();
     }
-    if (currentPanel) {
-        currentPanel.dispose();
+    // Dispose of all active panels
+    for (const panel of activePanels.values()) {
+        panel.dispose();
+    }
+    activePanels.clear();
+    // Dispose of any other resources if needed
+    if (codeEmotion) {
+        codeEmotion.dispose();
     }
 }
 //# sourceMappingURL=extension.js.map

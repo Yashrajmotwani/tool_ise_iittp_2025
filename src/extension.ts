@@ -12,7 +12,7 @@ const isCppFile = (editor: vscode.TextEditor) => {
 
 let codeEmotion: CodeEmotion;
 let lastActiveEditor: vscode.TextEditor | undefined;
-let currentPanel: vscode.WebviewPanel | undefined;
+// let currentPanel: vscode.WebviewPanel | undefined;
 
 const activePanels = new Map<string, vscode.WebviewPanel>();
 
@@ -85,7 +85,7 @@ function getColorForComplexity(score: number): string {
     return `rgb(${r}, ${g}, ${b})`;
 }
 
-function runLizardAndDecorate() {
+function runLizardAndDecorate(panel: vscode.WebviewPanel) {
     const editor = lastActiveEditor;
     if (!editor) {
         vscode.window.showErrorMessage('No active editor found');
@@ -163,7 +163,7 @@ function runLizardAndDecorate() {
 
         console.log("Functions to display:", functions);
 
-        if (currentPanel) {
+        if (panel) {
             const tableData = functions.map(f => ({
                 functionName: f.name,
                 complexity: f.score,
@@ -172,7 +172,7 @@ function runLizardAndDecorate() {
             }));
             
             console.log("Sending data to panel:", tableData);
-            currentPanel.webview.postMessage({
+            panel.webview.postMessage({
                 command: 'displayComplexity',
                 data: tableData
             });
@@ -211,7 +211,6 @@ export function activate(context: vscode.ExtensionContext) {
         const existingPanel = activePanels.get(filePath);
         if (existingPanel) {
             existingPanel.reveal();
-            currentPanel = existingPanel;
             return;
         }
 
@@ -225,14 +224,21 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
 
-        panel.webview.html = getWebviewContent(fileName || 'Untitled');
+        // panel.webview.html = getWebviewContent(fileName || 'Untitled');
 
-        currentPanel = panel;
+        // currentPanel = panel;
 
-        // Store panel reference
+        // Add panel to tracking map
         activePanels.set(filePath, panel);
+
+        // Handle panel disposal
+        panel.onDidDispose(() => {
+            activePanels.delete(filePath);
+        }, null, context.subscriptions);
+
+        panel.webview.html = getWebviewContent(fileName || 'Untitled');
         
-        currentPanel.webview.onDidReceiveMessage(
+        panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
                     case 'checkRefactor':
@@ -244,12 +250,12 @@ export function activate(context: vscode.ExtensionContext) {
                             return;
                         }
                         // Clear and show only refactor section
-                        currentPanel?.webview.postMessage({
+                        panel?.webview.postMessage({
                             command: 'resetAndShow',
                             show: 'refactor'
                         });
                         const refactorContent = getRefactorHTMLContent(functions);
-                        currentPanel?.webview.postMessage({
+                        panel?.webview.postMessage({
                             command: 'displayRefactor',
                             content: {
                                 html: refactorContent.html,
@@ -260,11 +266,11 @@ export function activate(context: vscode.ExtensionContext) {
                         
                     case 'analyzeComplexity':
                         // Clear and show only complexity section
-                        currentPanel?.webview.postMessage({
+                        panel?.webview.postMessage({
                             command: 'resetAndShow',
                             show: 'complexity'
                         });
-                        runLizardAndDecorate();
+                        runLizardAndDecorate(panel);
                         break;
                     
                     case 'completeTask':
@@ -295,11 +301,29 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
+// export function deactivate() {
+//     if (blue) {
+//         blue.dispose();
+//     }
+//     if (currentPanel) {
+//         currentPanel.dispose();
+//     }
+// }
+
 export function deactivate() {
+    // Dispose of the decoration type
     if (blue) {
         blue.dispose();
     }
-    if (currentPanel) {
-        currentPanel.dispose();
+
+    // Dispose of all active panels
+    for (const panel of activePanels.values()) {
+        panel.dispose();
+    }
+    activePanels.clear();
+
+    // Dispose of any other resources if needed
+    if (codeEmotion) {
+        codeEmotion.dispose();
     }
 }
