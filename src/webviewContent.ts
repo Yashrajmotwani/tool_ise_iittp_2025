@@ -486,54 +486,113 @@ export function getWebviewContent(fileName: string) {
 
         function displayComplexityTable(data) {
 
-            console.log("WEBVIEW: Received data for table:", data);
+    console.log("WEBVIEW: Received data for table:", data);
 
-            const section = document.getElementById('complexity-section');
-            console.log("WEBVIEW: Section element:", section);
-            const tableContainer = document.getElementById('complexity-table');
-            
-            if (!data || data.length === 0) {
-                console.warn("No complexity data received");
-                tableContainer.innerHTML = '<p>No complexity data found</p>';
-                section.classList.remove('hidden');
-                section.style.display = 'block';
-                return;
-            }
+    const section = document.getElementById('complexity-section');
+    console.log("WEBVIEW: Section element:", section);
+    const tableContainer = document.getElementById('complexity-table');
+    
+    if (!data || data.length === 0) {
+        console.warn("No complexity data received");
+        tableContainer.innerHTML = '<p>No complexity data found</p>';
+        section.classList.remove('hidden');
+        section.style.display = 'block';
+        return;
+    }
 
-            let tableHTML = 
-                '<table style="width: 100%; border-collapse: collapse;" border="1">' +
-                    '<thead>' +
-                        '<tr>' +
-                            '<th>Function Name</th>' +
-                            '<th>Complexity</th>' +
-                            '<th>Lines of Code</th>' +
-                            '<th>Location</th>' +
-                            '<th>Color</th>' 
-                        '</tr>' +
-                    '</thead>' +
-                    '<tbody>';
+    // Define the complexity to color mapping
+    const complexityColorMap = {
+        1: "#00ff00", // Bright green
+        5: "#ccff00", // Green-yellow
+        7: "#ffff00", // Yellow
+        10: "#ff9900", // Orange
+        16: "#ff0000", // Red
+        25: "#1a0000"  // Dark maroon
+    };
+
+    // Display complexity-color mapping before the table
+    const colorMappingContainer = document.createElement('div');
+    colorMappingContainer.innerHTML = 
+        '<h3>Complexity and Corresponding Colors</h3>' +
+        '<table style="width: 100%; border-collapse: collapse;" border="1">' +
+            '<thead>' +
+                '<tr>' +
+                    '<th>Complexity</th>' +
+                    '<th>Color</th>' +
+                    '<th>Named Color</th>' +
+                '</tr>' +
+            '</thead>' +
+            '<tbody>';
+
+    // Mapping the complexity levels to the named colors
+    const namedColorMap = {
+        1: 'Bright Green',
+        5: 'Green-Yellow',
+        7: 'Yellow',
+        10: 'Orange',
+        16: 'Red',
+        25: 'Black Maroon'
+    };
+
+    // Add each complexity-color mapping to the table
+    for (const complexity in complexityColorMap) {
+        const color = complexityColorMap[complexity];
+        const namedColor = namedColorMap[complexity];
+        colorMappingContainer.innerHTML += 
+            '<tr>' +
+                '<td>' + escapeHtml(complexity) + '</td>' +
+                '<td style="background-color:' + escapeHtml(color) + ';">' + escapeHtml(color) + '</td>' +
+                '<td>' + escapeHtml(namedColor) + '</td>' +
+            '</tr>';
+    }
+
+    colorMappingContainer.innerHTML += '</tbody></table>';
+
+    // Append the color mapping table before the complexity table
+    section.appendChild(colorMappingContainer);
+    
+    console.log("Color Mapping Table rendered successfully");
+
+    // Render the main complexity table
+    let tableHTML = 
+        '<table style="width: 100%; border-collapse: collapse;" border="1">' +
+            '<thead>' +
+                '<tr>' +
+                    '<th>Function Name</th>' +
+                    '<th>Complexity</th>' +
+                    '<th>Lines of Code</th>' +
+                    '<th>Location</th>' +
+                    '<th>Color Code</th>' +  // Added Color Code column
+                    '<th>Color</th>' +  // Added Color column
+                '</tr>' +
+            '</thead>' +
+            '<tbody>';
 
             data.forEach(item => {
+                const color = complexityColorMap[item.complexity] || '#ffffff';  // Default to white if not found
+
                 tableHTML += 
                     '<tr>' +
                         '<td>' + escapeHtml(item.functionName) + '</td>' +
                         '<td>' + escapeHtml(item.complexity) + '</td>' +
                         '<td>' + escapeHtml(item.loc) + '</td>' +
                         '<td>' + escapeHtml(item.location) + '</td>' +
-                        // '<td>' + escapeHtml(item.color) + '</td>' +
-                         '<td style="background-color:' + escapeHtml(item.color) + ';">' + escapeHtml(item.color) + '</td>' +
-                    '</tr>'
+                        // '<td>' + escapeHtml(color) + '</td>' +  // Show the color code (hex)
+                        '<td style="background-color:' + escapeHtml(item.color) + ';">' + escapeHtml(item.color) + '</td>' +  // Show color
+                    '</tr>';
             });
 
             tableHTML += '</tbody></table>';
-            section.classList.remove('hidden');
+
+            // Render the main complexity table below the color mapping table
             tableContainer.innerHTML = tableHTML;
             
-            console.log("Table rendered successfully");
+            console.log("Main Complexity Table rendered successfully");
 
             // Scroll to the complexity section
             section.scrollIntoView({ behavior: 'smooth' });
         }
+
             // Add event listener for refresh
 document.getElementById('refresh-btn')?.addEventListener('click', () => {
     completedTasks = 0;
