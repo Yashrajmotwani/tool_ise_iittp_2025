@@ -164,7 +164,8 @@ function runLizardAndDecorate(panel) {
                 functionName: f.name,
                 complexity: f.score,
                 loc: f.nloc,
-                location: `Lines ${f.line}-${f.endLine}`
+                location: `Lines ${f.line}-${f.endLine}`,
+                color: f.color
             }));
             console.log("Sending data to panel:", tableData);
             panel.webview.postMessage({
@@ -247,6 +248,11 @@ function activate(context) {
                     break;
                 case 'completeTask':
                     vscode.window.showInformationMessage(`Task completed: ${message.task}`);
+                    break;
+                case 'refreshExtension':
+                    storedDecorationsPerFile.clear(); // Clear decorations
+                    codeEmotion?.reset?.(); // Reset internal state
+                    vscode.window.showInformationMessage('🔄 Extension progress has been refreshed.');
                     break;
             }
         }, undefined, context.subscriptions);

@@ -355,12 +355,17 @@ function getWebviewContent(fileName) {
         </div>
         <div class="progress-text" id="progress-text">0% complete</div>
         
-        <div class="summary-stats">
-            <div class="stat-card">
-                <div class="stat-value" id="completed-tasks">0</div>
-                <div class="stat-label">Tasks Completed</div>
-            </div>
-        </div>
+      <div class="summary-stats" style="justify-content: space-between; align-items: center;">
+    <div class="stat-card">
+        <div class="stat-value" id="completed-tasks">0</div>
+        <div class="stat-label">Tasks Completed</div>
+    </div>
+    <button id="refresh-btn"
+        style="padding: 8px 14px; background-color: #2E7D32; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        🔄 Refresh
+    </button>
+</div>
+
         
         <div class="section">
             <h2><span class="emoji">📋</span> Pre-Review Checklist</h2>
@@ -505,6 +510,7 @@ function getWebviewContent(fileName) {
                             '<th>Complexity</th>' +
                             '<th>Lines of Code</th>' +
                             '<th>Location</th>' +
+                            '<th>Color</th>' 
                         '</tr>' +
                     '</thead>' +
                     '<tbody>';
@@ -516,6 +522,7 @@ function getWebviewContent(fileName) {
                         '<td>' + escapeHtml(item.complexity) + '</td>' +
                         '<td>' + escapeHtml(item.loc) + '</td>' +
                         '<td>' + escapeHtml(item.location) + '</td>' +
+                        '<td>' + escapeHtml(item.color) + '</td>' +
                     '</tr>'
             });
 
@@ -528,6 +535,21 @@ function getWebviewContent(fileName) {
             // Scroll to the complexity section
             section.scrollIntoView({ behavior: 'smooth' });
         }
+            // Add event listener for refresh
+document.getElementById('refresh-btn')?.addEventListener('click', () => {
+    completedTasks = 0;
+    document.querySelectorAll('.task-item').forEach(item => item.classList.remove('completed'));
+    updateProgress();
+
+    // Hide results at bottom
+    document.getElementById('refactor-section')?.classList.add('hidden');
+    document.getElementById('complexity-section')?.classList.add('hidden');
+
+    // Notify extension backend
+    vscode.postMessage({ command: 'refreshExtension' });
+});
+
+
 
         
         window.addEventListener('message', event => {
