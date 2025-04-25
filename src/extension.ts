@@ -28,12 +28,19 @@ type FunctionInfo = {
     color: string;
 };
 
+// interface FileDecorations {
+//     blue: vscode.DecorationOptions[];
+//     functions: FunctionInfo[];
+// }
 interface FileDecorations {
-    blue: vscode.DecorationOptions[];
+    decorations: {
+        type: vscode.TextEditorDecorationType;
+        range: vscode.DecorationOptions;
+    }[];
     functions: FunctionInfo[];
 }
-
 const storedDecorationsPerFile = new Map<string, FileDecorations>();
+// let blue: vscode.TextEditorDecorationType;
 
 function createDecorationTypes() {
     blue = vscode.window.createTextEditorDecorationType({
@@ -42,23 +49,36 @@ function createDecorationTypes() {
 }
 
 function applyDecorations(editor: vscode.TextEditor) {
-    const decorations = storedDecorationsPerFile.get(editor.document.fileName);
-    if (!decorations) { return; }
-    editor.setDecorations(blue, decorations.blue);
+    const fileData = storedDecorationsPerFile.get(editor.document.fileName);
+    if (!fileData) return;
+
+    // Apply all stored decorations to the editor
+    for (const { type, range } of fileData.decorations) {
+        editor.setDecorations(type, [range]);
+    }
 }
 
+
 function clearDecorations(editor: vscode.TextEditor) {
-    editor.setDecorations(blue, []);
+    const fileData = storedDecorationsPerFile.get(editor.document.fileName);
+    if (!fileData) return;
+
+    // Only hide the decorations instead of disposing of them
+    for (const { type } of fileData.decorations) {
+        editor.setDecorations(type, []);  // Hide the decorations from the editor
+    }
 }
+
+
 
 function toggleHeatmapFunction() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) { return; }
 
     const filePath = editor.document.fileName;
-    const decorations = storedDecorationsPerFile.get(filePath);
+    const fileData = storedDecorationsPerFile.get(filePath);
 
-    if (!decorations) {
+    if (!fileData) {
         vscode.window.showWarningMessage(
             'Heatmap data not found yet. Please run "Analyze Complexity" first.'
         );
@@ -66,27 +86,62 @@ function toggleHeatmapFunction() {
     }
 
     if (heatmapVisible) {
+        // Clear the decorations only from the editor, not from stored data
         clearDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now OFF`);
     } else {
+        // Apply the stored decorations
         applyDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now ON`);
     }
 
+    // Toggle heatmap visibility state
     heatmapVisible = !heatmapVisible;
 }
 
+
+
 function getColorForComplexity(score: number): string {
-    const maxScore = 25;
-    const normalized = Math.min(Math.max((score - 1) / (maxScore - 1), 0), 1);
-    const r = Math.floor(Math.min(normalized * 150 + 50, 255));
-    const g = Math.floor(Math.min((1 - normalized) * 150 + 50, 255));
-    const b = 0;
-    return `rgb(${r}, ${g}, ${b})`;
+    // const maxScore = 25;
+    // const normalized = Math.min(Math.max((score - 1) / (maxScore - 1), 0), 1);
+    // const r = Math.floor(Math.min(normalized * 150 + 50, 255));
+    // const g = Math.floor(Math.min((1 - normalized) * 150 + 50, 255));
+    // const b = 0;
+    // return `rgb(${r}, ${g}, ${b})`;
+    const complexityColorMap: Record<number, string> = {
+        1:  "#00ff00",  // Bright green
+        2:  "#33ff00",
+        3:  "#66ff00",
+        4:  "#99ff00",
+        5:  "#ccff00",  // Green-yellow
+        6:  "#eeff00",
+        7:  "#ffff00",  // Yellow
+        8:  "#ffdd00",
+        9:  "#ffbb00",
+        10: "#ff9900",  // Orange
+        11: "#ff7700",
+        12: "#ff5500",
+        13: "#ff3300",
+        14: "#ff2200",
+        15: "#ff1100",
+        16: "#ff0000",  // Red
+        17: "#e60000",
+        18: "#cc0000",
+        19: "#b30000",
+        20: "#990000",
+        21: "#800000",
+        22: "#660000",
+        23: "#4d0000",
+        24: "#330000",
+        25: "#1a0000"   // Dark maroon
+    };
+    const safeScore = Math.max(1, Math.min(score, 25));
+    return complexityColorMap[safeScore];
 }
 
-function runLizardAndDecorate(panel: vscode.WebviewPanel) {
-    const editor = lastActiveEditor;
+function runLizardAndDecorate(panel?: vscode.WebviewPanel, editorOverride?: vscode.TextEditor) {
+    const editor = editorOverride ?? lastActiveEditor;
+    // const editor = vscode.window.activeTextEditor;
     if (!editor) {
         vscode.window.showErrorMessage('No active editor found');
         return;
@@ -128,7 +183,7 @@ function runLizardAndDecorate(panel: vscode.WebviewPanel) {
         const uniqueLines = new Set<string>();
 
         const decorations: FileDecorations = {
-            blue: [],
+            decorations: [],
             functions
         };
 
@@ -147,28 +202,34 @@ function runLizardAndDecorate(panel: vscode.WebviewPanel) {
 
                 const color = getColorForComplexity(score);
                 functions.push({ name, score, line: startLine, endLine, nloc, color });
+                
+                const decorationType = vscode.window.createTextEditorDecorationType({
+                    backgroundColor: color
+                });
 
-                const range = new vscode.Range(startLine - 1, 0, endLine - 1, 1000);
-                const decor: vscode.DecorationOptions = {
-                    range,
+                // const range = new vscode.Range(startLine - 1, 0, endLine - 1, 1000);
+                const range: vscode.DecorationOptions = {
+                    range: new vscode.Range(startLine, 0, endLine - 1, 1000),
                     hoverMessage: `Complexity: ${score}`
                 };
 
-                decorations.blue.push(decor);
+                // decorations.decorations.push(decor);
+                decorations.decorations.push({ type: decorationType, range });
             }
         }
-
+        console.log(decorations.decorations);
         storedDecorationsPerFile.set(filePath, decorations);
-        heatmapVisible = false;
+        // heatmapVisible = false;
 
         console.log("Functions to display:", functions);
+
 
         if (panel) {
             const tableData = functions.map(f => ({
                 functionName: f.name,
                 complexity: f.score,
                 loc: f.nloc,
-                location: `Lines ${f.line}-${f.endLine}`,
+                location: `${f.line}-${f.endLine}`,
                 color: f.color
             }));
 
@@ -182,6 +243,9 @@ function runLizardAndDecorate(panel: vscode.WebviewPanel) {
         }
     });
 }
+
+
+
 
 export function activate(context: vscode.ExtensionContext) {
     codeEmotion = new CodeEmotion();

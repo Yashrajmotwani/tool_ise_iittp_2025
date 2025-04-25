@@ -1,46 +1,72 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CodeEmotion = void 0;
 // codeEmotion.ts
-import * as vscode from 'vscode';
-
-export class CodeEmotion {
-    private decorationType: vscode.TextEditorDecorationType;
-    private hasShownWarning = false;
-
+const vscode = __importStar(require("vscode"));
+class CodeEmotion {
+    decorationType;
+    hasShownWarning = false;
     constructor() {
         this.decorationType = vscode.window.createTextEditorDecorationType({});
     }
-
-    public dispose() {
+    dispose() {
         this.decorationType.dispose();
     }
-
-    private isCppFile(editor: vscode.TextEditor): boolean {
+    isCppFile(editor) {
         const languageId = editor.document.languageId;
         return languageId === 'c' || languageId === 'cpp';
     }
-
-    private stripComments(code: string): string {
+    stripComments(code) {
         return code
             .replace(/\/\*[\s\S]*?\*\//g, '')
             .replace(/\/\/.*$/gm, '');
     }
-
-    private checkMissingSemicolon(editor: vscode.TextEditor): vscode.DecorationOptions[] {
-        const decorations: vscode.DecorationOptions[] = [];
+    checkMissingSemicolon(editor) {
+        const decorations = [];
         if (!this.isCppFile(editor)) {
             return decorations;
         }
-
         let isInsideBlockComment = false;
-
         for (let i = 0; i < editor.document.lineCount; i++) {
             const line = editor.document.lineAt(i);
             const lineText = line.text.trim();
-
             // Handle block comment detection
             if (lineText.startsWith('/*')) {
                 isInsideBlockComment = true;
             }
-
             if (lineText === '' ||
                 lineText.startsWith('//') ||
                 isInsideBlockComment ||
@@ -53,7 +79,6 @@ export class CodeEmotion {
                 }
                 continue;
             }
-
             if (!lineText.endsWith(';') &&
                 !lineText.endsWith(')') &&
                 !lineText.match(/[=+\-*\/&|]\s*$/)) {
@@ -72,36 +97,29 @@ export class CodeEmotion {
         }
         return decorations;
     }
-
-    private checkTrailingWhitespace(editor: vscode.TextEditor): vscode.DecorationOptions[] {
-        const decorations: vscode.DecorationOptions[] = [];
+    checkTrailingWhitespace(editor) {
+        const decorations = [];
         if (!this.isCppFile(editor)) {
             return decorations;
         }
-
         let isInsideBlockComment = false;
-
         for (let i = 0; i < editor.document.lineCount; i++) {
             const line = editor.document.lineAt(i);
             const lineText = line.text;
-
             // Check if we're entering a block comment
             if (lineText.startsWith('/*')) {
                 isInsideBlockComment = true;
             }
-
             // Skip empty lines, single-line comments, and block comments
             if (lineText === '' ||
                 lineText.startsWith('//') ||
                 isInsideBlockComment) {
-
                 // Check if we're exiting a block comment
                 if (lineText.includes('*/')) {
                     isInsideBlockComment = false;
                 }
                 continue;
             }
-
             if (lineText.trim().length > 0 && lineText.match(/\s+$/)) {
                 decorations.push({
                     range: new vscode.Range(line.range.end, line.range.end),
@@ -118,34 +136,24 @@ export class CodeEmotion {
         }
         return decorations;
     }
-
     reset() {
         this.hasShownWarning = false;
         vscode.window.showInformationMessage('CodeEmotion has been reset.');
     }
-
-
-
-    public updateEmojiDecorations(editor: vscode.TextEditor, fileName: string) {
+    updateEmojiDecorations(editor, fileName) {
         if (!this.isCppFile(editor)) {
             editor.setDecorations(this.decorationType, []);
             if (!this.hasShownWarning) {
-                vscode.window.showWarningMessage(
-                    `Code Emotion emojis are disabled for "${fileName}" - only C/C++ files are supported.`,
-                    "OK"
-                );
+                vscode.window.showWarningMessage(`Code Emotion emojis are disabled for "${fileName}" - only C/C++ files are supported.`, "OK");
                 this.hasShownWarning = true;
             }
             return;
         }
-
         const originalText = editor.document.getText();
         const cleanedText = this.stripComments(originalText);
-
-        const decorationOptions: vscode.DecorationOptions[] = [];
-
+        const decorationOptions = [];
         // Code pattern emojis
-        const emojiPatterns: { regex: RegExp, emoji: string, hover: string, minCount?: number }[] = [
+        const emojiPatterns = [
             {
                 regex: /\bif\s*\(.*?\)\s*\{/g,
                 emoji: '💩',
@@ -168,10 +176,8 @@ export class CodeEmotion {
                 hover: 'Magic number detected! - Extension'
             }
         ];
-
         // Process code patterns
-        const emojiMatches: Map<number, { emojis: Set<string>, hovers: Set<string> }> = new Map();
-
+        const emojiMatches = new Map();
         emojiPatterns.forEach(({ regex, emoji, hover, minCount = 1 }) => {
             const matches = [...cleanedText.matchAll(regex)];
             if (matches.length >= minCount) {
@@ -180,20 +186,18 @@ export class CodeEmotion {
                     const originalPosition = originalText.indexOf(match[0]);
                     if (originalPosition >= 0) {
                         const lineNumber = editor.document.positionAt(originalPosition).line;
-
                         if (!emojiMatches.has(lineNumber)) {
                             emojiMatches.set(lineNumber, {
                                 emojis: new Set(),
                                 hovers: new Set()
                             });
                         }
-                        emojiMatches.get(lineNumber)!.emojis.add(emoji);
-                        emojiMatches.get(lineNumber)!.hovers.add(hover);
+                        emojiMatches.get(lineNumber).emojis.add(emoji);
+                        emojiMatches.get(lineNumber).hovers.add(hover);
                     }
                 });
             }
         });
-
         // Add emoji decorations
         emojiMatches.forEach((value, lineNumber) => {
             const line = editor.document.lineAt(lineNumber);
@@ -208,14 +212,11 @@ export class CodeEmotion {
                 hoverMessage: Array.from(value.hovers).join('\n')
             });
         });
-
         // Add all diagnostic decorations
-        decorationOptions.push(
-            ...this.checkMissingSemicolon(editor),
-            ...this.checkTrailingWhitespace(editor)
-        );
-
+        decorationOptions.push(...this.checkMissingSemicolon(editor), ...this.checkTrailingWhitespace(editor));
         editor.setDecorations(this.decorationType, []); // clear old
         editor.setDecorations(this.decorationType, decorationOptions);
     }
 }
+exports.CodeEmotion = CodeEmotion;
+//# sourceMappingURL=codeEmotion.js.map

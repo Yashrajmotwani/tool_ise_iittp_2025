@@ -520,7 +520,8 @@ export function getWebviewContent(fileName: string) {
                         '<td>' + escapeHtml(item.complexity) + '</td>' +
                         '<td>' + escapeHtml(item.loc) + '</td>' +
                         '<td>' + escapeHtml(item.location) + '</td>' +
-                        '<td>' + escapeHtml(item.color) + '</td>' +
+                        // '<td>' + escapeHtml(item.color) + '</td>' +
+                         '<td style="background-color:' + escapeHtml(item.color) + ';">' + escapeHtml(item.color) + '</td>' +
                     '</tr>'
             });
 
