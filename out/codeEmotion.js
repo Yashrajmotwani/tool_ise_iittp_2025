@@ -136,6 +136,10 @@ class CodeEmotion {
         }
         return decorations;
     }
+    reset() {
+        this.hasShownWarning = false;
+        vscode.window.showInformationMessage('CodeEmotion has been reset.');
+    }
     updateEmojiDecorations(editor, fileName) {
         if (!this.isCppFile(editor)) {
             editor.setDecorations(this.decorationType, []);
