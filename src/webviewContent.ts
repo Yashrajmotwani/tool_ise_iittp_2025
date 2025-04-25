@@ -353,12 +353,17 @@ export function getWebviewContent(fileName: string) {
         </div>
         <div class="progress-text" id="progress-text">0% complete</div>
         
-        <div class="summary-stats">
-            <div class="stat-card">
-                <div class="stat-value" id="completed-tasks">0</div>
-                <div class="stat-label">Tasks Completed</div>
-            </div>
-        </div>
+      <div class="summary-stats" style="justify-content: space-between; align-items: center;">
+    <div class="stat-card">
+        <div class="stat-value" id="completed-tasks">0</div>
+        <div class="stat-label">Tasks Completed</div>
+    </div>
+    <button id="refresh-btn"
+        style="padding: 8px 14px; background-color: #2E7D32; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        🔄 Refresh
+    </button>
+</div>
+
         
         <div class="section">
             <h2><span class="emoji">📋</span> Pre-Review Checklist</h2>
@@ -503,6 +508,7 @@ export function getWebviewContent(fileName: string) {
                             '<th>Complexity</th>' +
                             '<th>Lines of Code</th>' +
                             '<th>Location</th>' +
+                            '<th>Color</th>' 
                         '</tr>' +
                     '</thead>' +
                     '<tbody>';
@@ -514,6 +520,7 @@ export function getWebviewContent(fileName: string) {
                         '<td>' + escapeHtml(item.complexity) + '</td>' +
                         '<td>' + escapeHtml(item.loc) + '</td>' +
                         '<td>' + escapeHtml(item.location) + '</td>' +
+                        '<td>' + escapeHtml(item.color) + '</td>' +
                     '</tr>'
             });
 
@@ -526,6 +533,21 @@ export function getWebviewContent(fileName: string) {
             // Scroll to the complexity section
             section.scrollIntoView({ behavior: 'smooth' });
         }
+            // Add event listener for refresh
+document.getElementById('refresh-btn')?.addEventListener('click', () => {
+    completedTasks = 0;
+    document.querySelectorAll('.task-item').forEach(item => item.classList.remove('completed'));
+    updateProgress();
+
+    // Hide results at bottom
+    document.getElementById('refactor-section')?.classList.add('hidden');
+    document.getElementById('complexity-section')?.classList.add('hidden');
+
+    // Notify extension backend
+    vscode.postMessage({ command: 'refreshExtension' });
+});
+
+
 
         
         window.addEventListener('message', event => {
@@ -581,72 +603,72 @@ export function getWebviewContent(fileName: string) {
 // Refactoring rules
 const refactorRules = [
     {
-      key: 'long-function',
-      desc: 'Function is too long. Break into smaller functions.',
-      pattern: (code: string) => code.split(/\n/).length > 30,
-      links: [
-        'https://refactoring.guru/extract-method',
-        'https://dev.to/tkarropoulos/extract-method-refactoring-gn5'
-      ]
+        key: 'long-function',
+        desc: 'Function is too long. Break into smaller functions.',
+        pattern: (code: string) => code.split(/\n/).length > 30,
+        links: [
+            'https://refactoring.guru/extract-method',
+            'https://dev.to/tkarropoulos/extract-method-refactoring-gn5'
+        ]
     },
     {
-      key: 'nested-loops',
-      desc: 'Multiple nested loops detected. Consider simplifying or refactoring.',
-      pattern: (code: string) => (code.match(/for\s*\(.*\)/g) || []).length >= 2,
-      links: ['https://juliuskoronci.medium.com/the-evil-nested-for-loop-9fbc2f999ec1']
+        key: 'nested-loops',
+        desc: 'Multiple nested loops detected. Consider simplifying or refactoring.',
+        pattern: (code: string) => (code.match(/for\s*\(.*\)/g) || []).length >= 2,
+        links: ['https://juliuskoronci.medium.com/the-evil-nested-for-loop-9fbc2f999ec1']
     },
     {
-      key: 'magic-numbers',
-      desc: 'Magic numbers found. Replace them with named constants.',
-      pattern: (code: string) => /[^\w](\d{2,}|[1-9])[^\w]/.test(code),
-      links: [
-        'https://en.wikipedia.org/wiki/Magic_number_(programming)',
-        'https://refactoring.guru/replace-magic-number-with-symbolic-constant'
-      ]
+        key: 'magic-numbers',
+        desc: 'Magic numbers found. Replace them with named constants.',
+        pattern: (code: string) => /[^\w](\d{2,}|[1-9])[^\w]/.test(code),
+        links: [
+            'https://en.wikipedia.org/wiki/Magic_number_(programming)',
+            'https://refactoring.guru/replace-magic-number-with-symbolic-constant'
+        ]
     },
     {
-      key: 'duplicate-code',
-      desc: 'Possible duplicate lines. Consider extracting common logic.',
-      pattern: (code: string) => {
-        const lines = code.split(/\n/).map(line => line.trim()).filter(l => l.length > 10);
-        const duplicates = lines.filter((line, idx) => lines.indexOf(line) !== idx);
-        return duplicates.length > 0;
-      },
-      links: [
-        'https://www.codeant.ai/blogs/refactor-duplicate-code-examples',
-        'https://refactoring.guru/smells/duplicate-code'
-      ]
+        key: 'duplicate-code',
+        desc: 'Possible duplicate lines. Consider extracting common logic.',
+        pattern: (code: string) => {
+            const lines = code.split(/\n/).map(line => line.trim()).filter(l => l.length > 10);
+            const duplicates = lines.filter((line, idx) => lines.indexOf(line) !== idx);
+            return duplicates.length > 0;
+        },
+        links: [
+            'https://www.codeant.ai/blogs/refactor-duplicate-code-examples',
+            'https://refactoring.guru/smells/duplicate-code'
+        ]
     },
     {
-      key: 'long-parameter-list',
-      desc: 'Function has too many parameters. Consider grouping them.',
-      pattern: (code: string) => /\(.*?,.*?,.*?,.*?,/.test(code),
-      links: [
-        'https://stackoverflow.com/questions/439574/whats-the-best-way-to-refactor-a-method-that-has-too-many-6-parameters',
-        'https://codesignal.com/learn/courses/refactoring-by-leveraging-your-tests-with-csharp-xunit/lessons/long-parameter-list-introduce-parameter-object'
-      ]
+        key: 'long-parameter-list',
+        desc: 'Function has too many parameters. Consider grouping them.',
+        pattern: (code: string) => /\(.*?,.*?,.*?,.*?,/.test(code),
+        links: [
+            'https://stackoverflow.com/questions/439574/whats-the-best-way-to-refactor-a-method-that-has-too-many-6-parameters',
+            'https://codesignal.com/learn/courses/refactoring-by-leveraging-your-tests-with-csharp-xunit/lessons/long-parameter-list-introduce-parameter-object'
+        ]
     },
     {
-      key: 'deep-nesting',
-      desc: 'Deeply nested code blocks found. Try flattening logic.',
-      pattern: (code: string) => code.split('{').length - code.split('}').length >= 5,
-      links: [
-        'https://shuhanmirza.medium.com/two-simple-methods-to-refactor-deeply-nested-code-78eb302bb0b4'
-      ]
+        key: 'deep-nesting',
+        desc: 'Deeply nested code blocks found. Try flattening logic.',
+        pattern: (code: string) => code.split('{').length - code.split('}').length >= 5,
+        links: [
+            'https://shuhanmirza.medium.com/two-simple-methods-to-refactor-deeply-nested-code-78eb302bb0b4'
+        ]
     },
     {
-      key: 'temp-variable',
-      desc: 'Temporary variable used only once. Consider replacing with expression.',
-      pattern: (code: string) => /(?:int|float|double|auto)\s+\w+\s*=.*;/.test(code),
-      links: [
-        'https://wiki.c2.com/?ReplaceTempWithQuery',
-        'https://refactoring.guru/replace-temp-with-query'
-      ]
+        key: 'temp-variable',
+        desc: 'Temporary variable used only once. Consider replacing with expression.',
+        pattern: (code: string) => /(?:int|float|double|auto)\s+\w+\s*=.*;/.test(code),
+        links: [
+            'https://wiki.c2.com/?ReplaceTempWithQuery',
+            'https://refactoring.guru/replace-temp-with-query'
+        ]
     }
-  ];
-  
-  export function getRefactorHTMLContent(
-    functions: {name: string, body: string}[],
+];
+
+export function getRefactorHTMLContent(
+    functions: { name: string, body: string }[],
     // issueDefinitions: Record<string, string>,
     // emojiMap: Record<string, string>
 ) {
@@ -662,7 +684,7 @@ const refactorRules = [
         if (detectedIssues.length > 0) {
             functionIssues[func.name] = {
                 issues: detectedIssues,
-                links: detectedIssues.map(desc => 
+                links: detectedIssues.map(desc =>
                     refactorRules.find(r => r.desc === desc)?.links[0] || '#'
                 )
             };
@@ -678,7 +700,7 @@ const refactorRules = [
                 <span class="status-badge badge-error">${data.issues.length} issues</span>
             </div>
             <ul class="issue-list">`;
-        
+
         data.issues.forEach((issue, index) => {
             refactorHTML += `
             <li class="issue-item">
@@ -694,7 +716,7 @@ const refactorRules = [
                 </div>
             </li>`;
         });
-        
+
         refactorHTML += `</ul></div>`;
     }
 

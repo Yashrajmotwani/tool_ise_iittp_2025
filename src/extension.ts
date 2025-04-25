@@ -57,7 +57,7 @@ function toggleHeatmapFunction() {
 
     const filePath = editor.document.fileName;
     const decorations = storedDecorationsPerFile.get(filePath);
-    
+
     if (!decorations) {
         vscode.window.showWarningMessage(
             'Heatmap data not found yet. Please run "Analyze Complexity" first.'
@@ -168,9 +168,10 @@ function runLizardAndDecorate(panel: vscode.WebviewPanel) {
                 functionName: f.name,
                 complexity: f.score,
                 loc: f.nloc,
-                location: `Lines ${f.line}-${f.endLine}`
+                location: `Lines ${f.line}-${f.endLine}`,
+                color: f.color
             }));
-            
+
             console.log("Sending data to panel:", tableData);
             panel.webview.postMessage({
                 command: 'displayComplexity',
@@ -200,7 +201,7 @@ export function activate(context: vscode.ExtensionContext) {
         const fileName = document.fileName.split(/[\\/]/).pop();
 
         const functionRegex = /(?:(?:int|void|float|double|char|string|bool)\s+)?(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g;
-        
+
         let functions: { name: string, body: string }[] = [];
         let match: RegExpExecArray | null;
         while ((match = functionRegex.exec(text)) !== null) {
@@ -218,7 +219,7 @@ export function activate(context: vscode.ExtensionContext) {
             'refactorSuggestions',
             `Code Review Checklist - ${fileName}`,
             vscode.ViewColumn.One,
-            { 
+            {
                 enableScripts: true,
                 retainContextWhenHidden: true
             }
@@ -237,7 +238,7 @@ export function activate(context: vscode.ExtensionContext) {
         }, null, context.subscriptions);
 
         panel.webview.html = getWebviewContent(fileName || 'Untitled');
-        
+
         panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
@@ -249,6 +250,7 @@ export function activate(context: vscode.ExtensionContext) {
                             );
                             return;
                         }
+
                         // Clear and show only refactor section
                         panel?.webview.postMessage({
                             command: 'resetAndShow',
@@ -263,7 +265,7 @@ export function activate(context: vscode.ExtensionContext) {
                             }
                         });
                         break;
-                        
+
                     case 'analyzeComplexity':
                         // Clear and show only complexity section
                         panel?.webview.postMessage({
@@ -272,9 +274,15 @@ export function activate(context: vscode.ExtensionContext) {
                         });
                         runLizardAndDecorate(panel);
                         break;
-                    
+
                     case 'completeTask':
                         vscode.window.showInformationMessage(`Task completed: ${message.task}`);
+                        break;
+
+                    case 'refreshExtension':
+                        storedDecorationsPerFile.clear(); // Clear decorations
+                        codeEmotion?.reset?.();           // Reset internal state
+                        vscode.window.showInformationMessage('🔄 Extension progress has been refreshed.');
                         break;
                 }
             },
