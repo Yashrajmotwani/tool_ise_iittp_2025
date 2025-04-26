@@ -491,6 +491,17 @@ export function getWebviewContent(fileName: string) {
     console.log("WEBVIEW: Section element:", section);
     const tableContainer = document.getElementById('complexity-table');
     
+    // Clear previous color mapping elements if they exist
+    const existingButton = document.getElementById('color-mapping-button');
+    const existingMapping = document.getElementById('color-mapping-container');
+    
+    if (existingButton) {
+        section.removeChild(existingButton);
+    }
+    if (existingMapping) {
+        section.removeChild(existingMapping);
+    }
+
     if (!data || data.length === 0) {
         console.warn("No complexity data received");
         tableContainer.innerHTML = '<p>No complexity data found</p>';
@@ -530,6 +541,7 @@ export function getWebviewContent(fileName: string) {
 
     // Create a button to show/hide the color mapping
     const colorMappingButton = document.createElement('button');
+    colorMappingButton.id = 'color-mapping-button';
     colorMappingButton.textContent = 'Show Complexity Color Mapping';
     colorMappingButton.style.margin = '10px 0';
     colorMappingButton.style.padding = '5px 10px';
@@ -537,6 +549,7 @@ export function getWebviewContent(fileName: string) {
     
     // Create container for color mapping (initially hidden)
     const colorMappingContainer = document.createElement('div');
+    colorMappingContainer.id = 'color-mapping-container';
     colorMappingContainer.style.display = 'none';
     
     // Mapping the complexity levels to the named colors
@@ -647,6 +660,17 @@ export function getWebviewContent(fileName: string) {
 
     // Scroll to the complexity section
     section.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Helper function to escape HTML (if not already defined)
+function escapeHtml(unsafe) {
+    if (typeof unsafe === 'undefined') return '';
+    return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // Helper function to escape HTML (if not already defined)
