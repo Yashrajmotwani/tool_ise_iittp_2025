@@ -355,16 +355,16 @@ function getWebviewContent(fileName) {
         </div>
         <div class="progress-text" id="progress-text">0% complete</div>
         
-      <div class="summary-stats" style="justify-content: space-between; align-items: center;">
-    <div class="stat-card">
-        <div class="stat-value" id="completed-tasks">0</div>
-        <div class="stat-label">Tasks Completed</div>
-    </div>
-    <button id="refresh-btn"
-        style="padding: 8px 14px; background-color: #2E7D32; color: white; border: none; border-radius: 4px; cursor: pointer;">
-        🔄 Refresh
-    </button>
-</div>
+        <div class="summary-stats" style="justify-content: space-between; align-items: center;">
+            <div class="stat-card">
+                <div class="stat-value" id="completed-tasks">0</div>
+                <div class="stat-label">Tasks Completed</div>
+            </div>
+            <button id="refresh-btn" class="stat-card" style="background-color: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <div class="stat-value">🔄 Refresh Tasks</div>
+            </button>
+
+        </div>
 
         
         <div class="section">
