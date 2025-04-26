@@ -485,7 +485,6 @@ export function getWebviewContent(fileName: string) {
         }
 
         function displayComplexityTable(data) {
-
     console.log("WEBVIEW: Received data for table:", data);
 
     const section = document.getElementById('complexity-section');
@@ -529,20 +528,17 @@ export function getWebviewContent(fileName: string) {
         25: "#1a0000"  // Dark maroon
     };
 
-    // Display complexity-color mapping before the table
+    // Create a button to show/hide the color mapping
+    const colorMappingButton = document.createElement('button');
+    colorMappingButton.textContent = 'Show Complexity Color Mapping';
+    colorMappingButton.style.margin = '10px 0';
+    colorMappingButton.style.padding = '5px 10px';
+    colorMappingButton.style.cursor = 'pointer';
+    
+    // Create container for color mapping (initially hidden)
     const colorMappingContainer = document.createElement('div');
-    colorMappingContainer.innerHTML = 
-        '<h3>Complexity and Corresponding Colors</h3>' +
-        '<table style="width: 100%; border-collapse: collapse;" border="1">' +
-            '<thead>' +
-                '<tr>' +
-                    '<th>Complexity</th>' +
-                    '<th>Color</th>' +
-                    '<th>Named Color</th>' +
-                '</tr>' +
-            '</thead>' +
-            '<tbody>';
-
+    colorMappingContainer.style.display = 'none';
+    
     // Mapping the complexity levels to the named colors
     const namedColorMap = {
         1: 'Bright Green',
@@ -572,38 +568,48 @@ export function getWebviewContent(fileName: string) {
         25: 'Almost Black Maroon'
     };
 
-    // Add each complexity-color mapping to the table
+    // Build the color mapping table HTML
+    let colorMappingHTML = 
+        '<h3>Complexity and Corresponding Colors</h3>' +
+        '<table style="width: 100%; border-collapse: collapse;" border="1">' +
+            '<thead>' +
+                '<tr>' +
+                    '<th>Complexity</th>' +
+                    '<th>Color</th>' +
+                    '<th>Named Color</th>' +
+                '</tr>' +
+            '</thead>' +
+            '<tbody>';
+
     for (const complexity in complexityColorMap) {
         const color = complexityColorMap[complexity];
         const namedColor = namedColorMap[complexity];
         
-        // Properly format the rows
-        const row = document.createElement('tr');
-        
-        // Create and append cells for complexity, color, and named color
-        const complexityCell = document.createElement('td');
-        complexityCell.textContent = complexity;
-        row.appendChild(complexityCell);
-
-        const colorCell = document.createElement('td');
-        colorCell.style.backgroundColor = color;
-        colorCell.textContent = color;
-        row.appendChild(colorCell);
-
-        const namedColorCell = document.createElement('td');
-        namedColorCell.textContent = namedColor;
-        row.appendChild(namedColorCell);
-
-        // Append the row to the table body
-        colorMappingContainer.querySelector('tbody').appendChild(row);
+        colorMappingHTML += 
+            '<tr>' +
+                '<td>' + complexity + '</td>' +
+                '<td style="background-color:' + color + ';">' + color + '</td>' +
+                '<td>' + namedColor + '</td>' +
+            '</tr>';
     }
 
-    colorMappingContainer.innerHTML += '</tbody></table>';
+    colorMappingHTML += '</tbody></table>';
+    colorMappingContainer.innerHTML = colorMappingHTML;
 
-    // Append the color mapping table before the complexity table
-    section.appendChild(colorMappingContainer);
-    
-    console.log("Color Mapping Table rendered successfully");
+    // Toggle color mapping visibility on button click
+    colorMappingButton.addEventListener('click', () => {
+        if (colorMappingContainer.style.display === 'none') {
+            colorMappingContainer.style.display = 'block';
+            colorMappingButton.textContent = 'Hide Complexity Color Mapping';
+        } else {
+            colorMappingContainer.style.display = 'none';
+            colorMappingButton.textContent = 'Show Complexity Color Mapping';
+        }
+    });
+
+    // Insert the button and container at the top of the section
+    section.insertBefore(colorMappingButton, tableContainer);
+    section.insertBefore(colorMappingContainer, tableContainer);
 
     // Render the main complexity table
     let tableHTML = 
@@ -614,14 +620,14 @@ export function getWebviewContent(fileName: string) {
                     '<th>Complexity</th>' +
                     '<th>Lines of Code</th>' +
                     '<th>Location</th>' +
-                    '<th>Color Code</th>' +  // Added Color Code column
-                    '<th>Color</th>' +  // Added Color column
+                    '<th>Color Code</th>' +
+                    '<th>Color</th>' +
                 '</tr>' +
             '</thead>' +
             '<tbody>';
 
     data.forEach(item => {
-        const color = complexityColorMap[item.complexity] || '#ffffff';  // Default to white if not found
+        const color = complexityColorMap[item.complexity] || '#ffffff';
 
         tableHTML += 
             '<tr>' +
@@ -629,20 +635,29 @@ export function getWebviewContent(fileName: string) {
                 '<td>' + escapeHtml(item.complexity) + '</td>' +
                 '<td>' + escapeHtml(item.loc) + '</td>' +
                 '<td>' + escapeHtml(item.location) + '</td>' +
-                '<td>' + escapeHtml(color) + '</td>' +  // Show the color code (hex)
-                '<td style="background-color:' + escapeHtml(color) + ';">' + escapeHtml(color) + '</td>' +  // Show color
+                '<td>' + escapeHtml(color) + '</td>' +
+                '<td style="background-color:' + escapeHtml(color) + ';">' + escapeHtml(color) + '</td>' +
             '</tr>';
     });
 
     tableHTML += '</tbody></table>';
-
-    // Render the main complexity table below the color mapping table
     tableContainer.innerHTML = tableHTML;
     
     console.log("Main Complexity Table rendered successfully");
 
     // Scroll to the complexity section
     section.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Helper function to escape HTML (if not already defined)
+function escapeHtml(unsafe) {
+    if (typeof unsafe === 'undefined') return '';
+    return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
