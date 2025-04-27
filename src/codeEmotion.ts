@@ -54,6 +54,15 @@ export class CodeEmotion {
                 continue;
             }
 
+            // Add an exception for "case" labels, as they don't require semicolons
+            if (lineText.startsWith('case') || lineText.startsWith('default')) {
+                const codeAfterLabel = lineText.substring(lineText.indexOf(':') + 1).trim();
+                // Skip the line only if there's no code after the case/default label
+                if (codeAfterLabel === '') {
+                    continue;
+                }
+            }
+
             if (!lineText.endsWith(';') &&
                 !lineText.endsWith(')') &&
                 !lineText.match(/[=+\-*\/&|]\s*$/)) {
@@ -142,6 +151,8 @@ export class CodeEmotion {
         const originalText = editor.document.getText();
         const cleanedText = this.stripComments(originalText);
 
+        console.log(cleanedText)
+
         const decorationOptions: vscode.DecorationOptions[] = [];
 
         // Code pattern emojis
@@ -166,6 +177,74 @@ export class CodeEmotion {
                 regex: /(?<!case\s)(?<!return\s)(?<!default\s)\b\d+\b/g,
                 emoji: '🔢',
                 hover: 'Magic number detected! - Extension'
+            },
+            {
+                regex: /\b(?:if|for|while)\b\s*\([^)]*\)\s*\{/g,
+                emoji: '🌟',
+                hover: 'Well-Structured Control Flow. Follows clean syntax best practices and Clear scope definition - Extension',
+                minCount: 1
+            },
+            {
+                regex: /\b(?:return|break|continue)\b/g,
+                emoji: '⚡',
+                hover: 'Great! Improving Performance and Reducing unnecessary iterations - Extension',
+                minCount: 1
+            },
+            {
+                regex: /\bvoid\s+\w+\s*\([^)]*\)\s*\{/g,
+                emoji: '👍',
+                hover: 'Good void function design! - Extension',
+                minCount: 1
+            },
+            {
+                regex: /\b(?:TEST|TEST_F)\b\s*\([^)]*\)/g,
+                emoji: '🧪', 
+                hover: 'Wow! Google Test macro detected. Tip: Keep tests focused. - Extension'
+            },
+            {
+                regex: /\b(?:ASSERT_|EXPECT_)[A-Z]+\([^)]*\)/g,
+                emoji: '✅',
+                hover: 'Great! Google Test assertion. Tip: Use EXPECT_ for non-fatal failures, ASSERT_ for fatal ones.'
+            },
+            {
+                regex: /\btry\s*\{[^}]*catch\s*\(/g,
+                emoji: '🛡️',
+                hover: "Proper error handling! Remember: Log errors with context. - Extension"
+            },
+            {
+                regex: /const\s+\w+\s*=\s*\d+/g,
+                emoji: '🔮',
+                hover: "Perfect! Magic number replaced with constant! - Extension"
+            },
+            {
+                regex: /`[^`]*\$\{[^}]+\}[^`]*`/g,
+                emoji: '🧵',
+                hover: "Template literals beat string concatenation! - Extension"
+            },
+            {
+                regex: /\(\s*\*\s*\w+\s*\)\s*\([^)]*\)/g,
+                emoji: '🏹',
+                hover: "Good: Function pointer usage in C/C++. Tip: Use typedef for complex cases."
+            },
+            {
+                regex: /(?:beforeEach|afterEach|describe|it)\(/g,
+                emoji: '🧪',
+                hover: "Test helpers = maintainable suites! Group related tests. - Extension"
+            },
+            {
+                regex: /\[\]([^)]*)\s*\{/g,
+                emoji: 'λ',
+                hover: "Modern C++: Lambda detected. Tip: Use captures like `[&]` carefully!"
+            },
+            {
+                regex: /\b(?:unique|shared|weak)_ptr\s*</g,
+                emoji: '🧠',
+                hover: "Modern C++: Smart pointer usage avoids manual memory leaks."
+            },
+            {
+                regex: /\bTEST_CASE\b\s*\([^)]*\)/g,
+                emoji: '🧪',
+                hover: 'Catch2 test. Tip: Use sections to organize related cases. - Extension'
             }
         ];
 
@@ -197,6 +276,7 @@ export class CodeEmotion {
         // Add emoji decorations
         emojiMatches.forEach((value, lineNumber) => {
             const line = editor.document.lineAt(lineNumber);
+
             decorationOptions.push({
                 range: new vscode.Range(line.range.end, line.range.end),
                 renderOptions: {
@@ -205,9 +285,63 @@ export class CodeEmotion {
                         margin: '0 0 0 10px'
                     }
                 },
-                hoverMessage: Array.from(value.hovers).join('\n')
+                hoverMessage: Array.from(value.hovers).join('   \n')
             });
         });
+
+        // Process comment emojis separately
+        const decoratedLines: Set<number> = new Set();
+        let insideMultilineComment = false;
+
+        // Match both single-line (//) and multiline (/* */) comments
+        const commentMatches = [...originalText.matchAll(/\/\/[^\n]+|\/\*[\s\S]*?\*\//g)];
+
+        commentMatches.forEach(match => {
+            const matchText = match[0];
+            const matchStart = originalText.indexOf(matchText);
+            const matchEnd = matchStart + matchText.length;
+
+            // Check if the match is inside a multi-line comment block
+            if (matchText.startsWith('/*')) {
+                insideMultilineComment = true; // We're inside a block comment
+            }
+            if (matchText.endsWith('*/')) {
+                insideMultilineComment = false; // End of block comment
+            }
+
+            // Skip decoration if inside a multi-line comment block
+            if (insideMultilineComment) {
+                return;
+            }
+
+            // Only process single-line comments (//)
+            if (matchText.startsWith('//')) {
+                const lineNumber = editor.document.positionAt(matchStart).line;
+
+                // Skip this line if it has already been decorated
+                if (decoratedLines.has(lineNumber)) {
+                    return;
+                }
+
+                // Add decoration for the comment line
+                decorationOptions.push({
+                    range: new vscode.Range(editor.document.positionAt(matchStart), editor.document.positionAt(matchEnd)),
+                    renderOptions: {
+                        after: {
+                            contentText: ' 📝',
+                            margin: '0 0 0 10px',
+                            color: 'gray' // Optional: Adjust color as needed
+                        }
+                    },
+                    hoverMessage: "Documentation: Clear comment! Tip: Update comments when code changes. - Extension"
+                });
+
+                // Mark the line as decorated
+                decoratedLines.add(lineNumber);
+            }
+        });
+
+        
 
         // Add all diagnostic decorations
         decorationOptions.push(
