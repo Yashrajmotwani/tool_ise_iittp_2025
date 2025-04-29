@@ -12,14 +12,14 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:code-review-helper.detectFunctions"
+    "onCommand:code-review-helper.codeReview"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "code-review-helper.detectFunctions",
-        "title": "Code Review Helper: Detect Functions"
+        "command": "code-review-helper.codeReview",
+        "title": "Code Review Helper Checklist"
       },
       {
         "command": "heatmap.toggleHeatmap",

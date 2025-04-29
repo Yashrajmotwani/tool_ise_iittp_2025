@@ -180,11 +180,6 @@ class CodeEmotion {
                 hover: 'Nested loops detected! - Extension'
             },
             {
-                regex: /(?<!case\s)(?<!return\s)(?<!default\s)\b\d+\b/g,
-                emoji: '🔢',
-                hover: 'Magic number detected! - Extension'
-            },
-            {
                 regex: /\b(?:if|for|while)\b\s*\([^)]*\)\s*\{/g,
                 emoji: '🌟',
                 hover: 'Well-Structured Control Flow. Follows clean syntax best practices and Clear scope definition - Extension',
@@ -333,7 +328,9 @@ class CodeEmotion {
             }
         });
         // Add all diagnostic decorations
-        decorationOptions.push(...this.checkMissingSemicolon(editor), ...this.checkTrailingWhitespace(editor));
+        decorationOptions.push(
+        // ...this.checkMissingSemicolon(editor),
+        ...this.checkTrailingWhitespace(editor));
         editor.setDecorations(this.decorationType, []); // clear old
         editor.setDecorations(this.decorationType, decorationOptions);
     }

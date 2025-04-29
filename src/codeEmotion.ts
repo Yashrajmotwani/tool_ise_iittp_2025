@@ -151,7 +151,7 @@ export class CodeEmotion {
         const originalText = editor.document.getText();
         const cleanedText = this.stripComments(originalText);
 
-        console.log(cleanedText)
+        console.log(cleanedText);
 
         const decorationOptions: vscode.DecorationOptions[] = [];
 
@@ -172,11 +172,6 @@ export class CodeEmotion {
                 regex: /(\b(for|while)\s*\(.*?\)\s*\{[^}]*\b(for|while)\s*\(.*?\))/g,
                 emoji: '🔁',
                 hover: 'Nested loops detected! - Extension'
-            },
-            {
-                regex: /(?<!case\s)(?<!return\s)(?<!default\s)\b\d+\b/g,
-                emoji: '🔢',
-                hover: 'Magic number detected! - Extension'
             },
             {
                 regex: /\b(?:if|for|while)\b\s*\([^)]*\)\s*\{/g,
@@ -345,7 +340,7 @@ export class CodeEmotion {
 
         // Add all diagnostic decorations
         decorationOptions.push(
-            ...this.checkMissingSemicolon(editor),
+            // ...this.checkMissingSemicolon(editor),
             ...this.checkTrailingWhitespace(editor)
         );
 

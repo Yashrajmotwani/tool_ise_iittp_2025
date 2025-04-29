@@ -392,15 +392,30 @@ function getWebviewContent(fileName) {
                         </button>
                     </div>
                 </li>
+
+                <h3 style="margin: 20px 0 10px; color: var(--light-text);">General Pre-Review Checklist</h3>
+
                 <li class="task-item" data-task="tests">
-                    <label>Check Code Time Complexity</label>
+                    <label>Did you Run Test Cases?</label>
                     <button class="btn btn-outline" onclick="completeTask('tests')">
                         <span class="emoji">✅</span> Mark Complete
                     </button>
                 </li>
                 <li class="task-item" data-task="comments">
-                    <label>Add/update code comments</label>
+                    <label>Did you Add/update code comments?</label>
                     <button class="btn btn-outline" onclick="completeTask('comments')">
+                        <span class="emoji">✅</span> Mark Complete
+                    </button>
+                </li>
+                <li class="task-item" data-task="consistent">
+                    <label>Are variable and function names meaningful and consistent?</label>
+                    <button class="btn btn-outline" onclick="completeTask('consistent')">
+                        <span class="emoji">✅</span> Mark Complete
+                    </button>
+                </li>
+                <li class="task-item" data-task="clean">
+                    <label>Have you done Code Cleaning?</label>
+                    <button class="btn btn-outline" onclick="completeTask('clean')">
                         <span class="emoji">✅</span> Mark Complete
                     </button>
                 </li>
@@ -421,7 +436,7 @@ function getWebviewContent(fileName) {
     <script>
         const vscode = acquireVsCodeApi();
         let completedTasks = 0;
-        const totalTasks = 4; // Total number of checklist items
+        const totalTasks = 6; // Total number of checklist items
         
         function updateProgress() {
             const progress = Math.round((completedTasks / totalTasks) * 100);
@@ -544,10 +559,9 @@ function getWebviewContent(fileName) {
     // Create a button to show/hide the color mapping
     const colorMappingButton = document.createElement('button');
     colorMappingButton.id = 'color-mapping-button';
+    colorMappingButton.className = 'btn';
     colorMappingButton.textContent = 'Show Complexity Color Mapping';
     colorMappingButton.style.margin = '10px 0';
-    colorMappingButton.style.padding = '5px 10px';
-    colorMappingButton.style.cursor = 'pointer';
     
     // Create container for color mapping (initially hidden)
     const colorMappingContainer = document.createElement('div');
@@ -583,33 +597,36 @@ function getWebviewContent(fileName) {
         25: 'Almost Black Maroon'
     };
 
-    // Build the color mapping table HTML
+    // Create a static progress bar with labels below
     let colorMappingHTML = 
         '<h3>Complexity and Corresponding Colors</h3>' +
-        '<table style="width: 100%; border-collapse: collapse;" border="1">' +
-            '<thead>' +
-                '<tr>' +
-                    '<th>Complexity</th>' +
-                    '<th>Color</th>' +
-                    '<th>Named Color</th>' +
-                '</tr>' +
-            '</thead>' +
-            '<tbody>';
+        // Color bar
+        '<div style="display: flex; width: 100%; height: 30px; border: 1px solid #000; overflow: hidden; border-radius: 5px;">';
 
     for (const complexity in complexityColorMap) {
         const color = complexityColorMap[complexity];
-        const namedColor = namedColorMap[complexity];
-        
         colorMappingHTML += 
-            '<tr>' +
-                '<td>' + complexity + '</td>' +
-                '<td style="background-color:' + color + ';">' + color + '</td>' +
-                '<td>' + namedColor + '</td>' +
-            '</tr>';
+            '<div title="Complexity ' + complexity + ': ' + namedColorMap[complexity] + '" ' + 
+            'style="flex: 1; background-color: ' + color + ';"></div>';
     }
 
-    colorMappingHTML += '</tbody></table>';
+    colorMappingHTML += '</div>';
+
+    // Complexity number labels below the bar
+    colorMappingHTML += '<div style="display: flex; width: 100%; font-size: 10px; margin-top: 4px;">';
+
+    for (const complexity in complexityColorMap) {
+        colorMappingHTML += 
+            '<div style="flex: 1; text-align: center;">' + complexity + '</div>';
+    }
+
+    colorMappingHTML += '</div>';
+    colorMappingHTML += '<div style="height: 20px;"></div>';
+
+    // Render into the container
     colorMappingContainer.innerHTML = colorMappingHTML;
+
+
 
     // Toggle color mapping visibility on button click
     colorMappingButton.addEventListener('click', () => {
@@ -631,12 +648,11 @@ function getWebviewContent(fileName) {
         '<table style="width: 100%; border-collapse: collapse;" border="1">' +
             '<thead>' +
                 '<tr>' +
-                    '<th>Function Name</th>' +
-                    '<th>Complexity</th>' +
-                    '<th>Lines of Code</th>' +
-                    '<th>Location</th>' +
-                    '<th>Color Code</th>' +
-                    '<th>Color</th>' +
+                    '<th style="width: 25%;">Function Name</th>' +
+                    '<th style="width: 10%;">Complexity</th>' +
+                    '<th style="width: 15%;">Lines of Code</th>' +
+                    '<th style="width: 15%;">Location</th>' +
+                    '<th style="width: 35%;">Color</th>' +
                 '</tr>' +
             '</thead>' +
             '<tbody>';
@@ -647,11 +663,10 @@ function getWebviewContent(fileName) {
         tableHTML += 
             '<tr>' +
                 '<td>' + escapeHtml(item.functionName) + '</td>' +
-                '<td>' + escapeHtml(item.complexity) + '</td>' +
-                '<td>' + escapeHtml(item.loc) + '</td>' +
-                '<td>' + escapeHtml(item.location) + '</td>' +
-                '<td>' + escapeHtml(color) + '</td>' +
-                '<td style="background-color:' + escapeHtml(color) + ';">' + escapeHtml(color) + '</td>' +
+                '<td style="text-align: center;">' + escapeHtml(item.complexity) + '</td>' +
+                '<td style="text-align: center;">' + escapeHtml(item.loc) + '</td>' +
+                '<td style="text-align: center;">' + escapeHtml(item.location) + '</td>' +
+                '<td style="background-color:' + escapeHtml(color) + ';">' + '</td>' +
             '</tr>';
     });
 

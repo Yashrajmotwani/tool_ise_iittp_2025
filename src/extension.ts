@@ -50,7 +50,7 @@ function createDecorationTypes() {
 
 function applyDecorations(editor: vscode.TextEditor) {
     const fileData = storedDecorationsPerFile.get(editor.document.fileName);
-    if (!fileData) return;
+    if (!fileData) {return;}
 
     // Apply all stored decorations to the editor
     for (const { type, range } of fileData.decorations) {
@@ -61,7 +61,7 @@ function applyDecorations(editor: vscode.TextEditor) {
 
 function clearDecorations(editor: vscode.TextEditor) {
     const fileData = storedDecorationsPerFile.get(editor.document.fileName);
-    if (!fileData) return;
+    if (!fileData) {return;}
 
     // Only hide the decorations instead of disposing of them
     for (const { type } of fileData.decorations) {
@@ -251,12 +251,14 @@ export function activate(context: vscode.ExtensionContext) {
     codeEmotion = new CodeEmotion();
     createDecorationTypes();
 
-    let disposable = vscode.commands.registerCommand('code-review-helper.detectFunctions', () => {
+    let disposable = vscode.commands.registerCommand('code-review-helper.codeReview', () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active text editor found!');
             return;
         }
+
+        console.log('Code Review Helper extension activated and initialized successfully.');
 
         lastActiveEditor = editor;
         const document = editor.document;
@@ -278,6 +280,14 @@ export function activate(context: vscode.ExtensionContext) {
             existingPanel.reveal();
             return;
         }
+        else if (activePanels.size > 0) {
+            vscode.window.showInformationMessage(
+                'Another panel is already open. Please Close that first before running on a different file.',
+                { modal: true }
+            );
+            
+            return;
+        }
 
         const panel = vscode.window.createWebviewPanel(
             'refactorSuggestions',
@@ -288,10 +298,6 @@ export function activate(context: vscode.ExtensionContext) {
                 retainContextWhenHidden: true
             }
         );
-
-        // panel.webview.html = getWebviewContent(fileName || 'Untitled');
-
-        // currentPanel = panel;
 
         // Add panel to tracking map
         activePanels.set(filePath, panel);
@@ -374,28 +380,47 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // export function deactivate() {
+//     // Dispose of the decoration type
 //     if (blue) {
 //         blue.dispose();
 //     }
-//     if (currentPanel) {
-//         currentPanel.dispose();
+
+//     // Dispose of all active panels
+//     for (const panel of activePanels.values()) {
+//         panel.dispose();
+//     }
+//     activePanels.clear();
+
+//     // Dispose of any other resources if needed
+//     if (codeEmotion) {
+//         codeEmotion.dispose();
 //     }
 // }
 
 export function deactivate() {
-    // Dispose of the decoration type
+    // Dispose decoration types and reset state
     if (blue) {
         blue.dispose();
     }
 
-    // Dispose of all active panels
+    storedDecorationsPerFile.clear();
+    heatmapVisible = false;
+    codeEmotion?.reset?.();  
+
+    // Clear CodeEmotion if it has a dispose method or manual cleanup
+    if (codeEmotion && typeof codeEmotion.dispose === 'function') {
+        codeEmotion.dispose();
+    }
+    codeEmotion = undefined as any;
+
+    lastActiveEditor = undefined;
+
+    // Dispose active panels
     for (const panel of activePanels.values()) {
         panel.dispose();
     }
     activePanels.clear();
 
-    // Dispose of any other resources if needed
-    if (codeEmotion) {
-        codeEmotion.dispose();
-    }
+    console.log('Code Review Helper extension deactivated and cleaned up.');
 }
+
