@@ -15,9 +15,20 @@ Our aim to to create a Code Review Checklist to help developers create better qu
 
 3. This extension uses **Lizard** for complexity analysis:
 
+    For windows:
     ```
     pip install lizard
     ```
+
+    For Linux:
+    ```
+    pip3 install lizard
+    ```
+    
+   
+
+    **Complexity & Heatmap feature won't run on any system if the lizard path dependency is not resolved.**
+
 
 
 ## Using the Extension
@@ -107,6 +118,7 @@ When toggled **ON**, the extension:
 - Clears any previous decorations
 - Runs Lizard analysis again
 - Applies new heatmap overlays based on updated complexity
+- **The file must be saved to see the updated code heatmap.**
 
 When toggled **OFF**, it clears the decorations without deleting the stored analysis.
 
