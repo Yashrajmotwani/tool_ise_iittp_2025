@@ -62,7 +62,7 @@ The extension detects and decorates your code based on various patterns:
 - `🌟`: Well-structured control flow.
 - `⚡`: Performance optimization through `return`, `break`, or `continue`.
 - `👍`: Well-designed void functions.
-- `🧪`: Google Test macros or related test functions.
+- `🧪`: Google Test macros and Catch2 test macros.
 - `✅`: Google Test assertions.
 - `🛡️`: Proper error handling using `try/catch`.
 - `🔮`: Use of constants instead of magic numbers.
@@ -70,7 +70,6 @@ The extension detects and decorates your code based on various patterns:
 - `🏹`: Function pointer usage in C/C++.
 - `λ`: Lambda functions in C++.
 - `🧠`: Smart pointer usage (e.g., `unique_ptr`, `shared_ptr`, `weak_ptr`).
-- `🧪`: Catch2 test macros.
 
 
 #### Supported Languages
