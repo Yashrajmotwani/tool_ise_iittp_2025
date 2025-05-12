@@ -130,14 +130,14 @@ This feature helps developers improve the maintainability and readability of the
 
 Here are some of the key patterns identified:
 
-| Pattern Detected        | Symbol | Explanation                                                                 |
-|-------------------------|--------|-----------------------------------------------------------------------------|
-| Long functions          | 📏     | Functions with too many lines, suggesting modularization                    |
-| Magic numbers           | 🔢     | Hardcoded numeric values should be replaced with named constants            |
-| Deep nesting            | 🌲     | If/Else or loops nested more than 2 levels—recommend simplification         |
-| Large parameter lists   | 📦     | Functions with >3 parameters—suggest grouping or using a struct             |
-| Repeated code blocks    | 🔁     | Duplicate code logic detected—recommend creating helper functions           |
-| Switch without default  | ❓     | `switch` cases missing `default` handling—can lead to missed conditions     |
+| Pattern Detected        | Explanation                                                                 |
+|-------------------------|-----------------------------------------------------------------------------|
+| Long functions          | Functions with too many lines, suggesting modularization                    |
+| Magic numbers           | Hardcoded numeric values should be replaced with named constants            |
+| Deep nesting            | If/Else or loops nested more than 2 levels—recommend simplification         |
+| Large parameter lists   | Functions with >3 parameters—suggest grouping or using a struct             |
+| Repeated code blocks    | Duplicate code logic detected—recommend creating helper functions           |
+| Switch without default  | `switch` cases missing `default` handling—can lead to missed conditions     |
 
 #### How It Works
 
