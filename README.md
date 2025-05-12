@@ -17,9 +17,11 @@ pip install lizard
 
 > Code Review Helper or Code Review IIT 
  
-to find our Extension on VS Code Extensions. Click on install.
+to find our Extension on VS Code Extensions
 
-3. To run and use extension on a Particular File:
+3. Click on install Extension.
+
+4. To run and use extension on a Particular File:
 
 > Ctrl + Shift + P
 
@@ -33,11 +35,11 @@ This feature provides an interactive and visual way to enhance the C/C++ code an
 
 #### Code Emotion Features
 
-- 💡 **Code Pattern Emojis**: Adds emojis to indicate patterns such as too many `if` statements, nested loops, large `switch` statements, and more.
-- 🚫 **Missing Semicolons Detection**: Flags missing semicolons at the end of statements in C/C++ code.
-- ⚠️ **Trailing Whitespace Detection**: Flags trailing whitespaces in your code to help maintain cleaner formatting.
-- 🧑‍💻 **Well-Structured Code**: Highlights well-structured control flows like `if`, `for`, and `while` statements, and encourages the use of modern C++ constructs like `unique_ptr` and `shared_ptr`.
-- 📝 **Clear Comments**: Adds emojis to single-line comments to remind developers to maintain and update comments when code changes.
+- **Code Pattern Emojis**: Adds emojis to indicate patterns such as too many `if` statements, nested loops, large `switch` statements, and more.
+- **Missing Semicolons Detection**: Flags missing semicolons at the end of statements in C/C++ code.
+- **Trailing Whitespace Detection**: Flags trailing whitespaces in your code to help maintain cleaner formatting.
+- **Well-Structured Code**: Highlights well-structured control flows like `if`, `for`, and `while` statements, and encourages the use of modern C++ constructs like `unique_ptr` and `shared_ptr`.
+- **Clear Comments**: Adds emojis to single-line comments to remind developers to maintain and update comments when code changes.
 
 
 #### Emoji Patterns
@@ -63,10 +65,10 @@ The extension detects and decorates your code based on various patterns:
 
 #### Supported Languages
 
-This extension is designed specifically for C and C++ files.
+This feature is designed specifically for C and C++ files.
 
-- **C** (🔧)
-- **C++** (🔧)
+- **C**
+- **C++**
 
 
 ### 2. Cyclomatic Complexity Heatmap
@@ -75,12 +77,10 @@ This feature helps developers analyze code complexity and improve code quality w
 
 #### Complexity Features
 
-- 🧠 **Cyclomatic Complexity Analysis** using [Lizard](https://github.com/terryyin/lizard)
-- 🎨 **Color-coded Heatmap** overlay on functions based on complexity
-- ✅ **Toggle Heatmap** ON/OFF dynamically via command
-- 🔍 **Function-level Analysis Panel** with webview showing detailed complexity info
-<!-- - 🛠️ **Refactor suggestions** for C/C++ files based on basic code patterns -->
-
+- **Cyclomatic Complexity Analysis** using [Lizard](https://github.com/terryyin/lizard)
+- **Color-coded Heatmap** overlay on functions based on complexity
+- **Toggle Heatmap** ON/OFF dynamically via command
+- **Function-level Analysis Panel** with webview showing detailed complexity info
 
 #### Heatmap Colors
 The heatmap uses a gradient from **green (low complexity)** to **red (high complexity)**:
@@ -95,13 +95,13 @@ The heatmap uses a gradient from **green (low complexity)** to **red (high compl
 #### How Heatmap Toggle Works
 When toggled **ON**, the extension:
 
-- Clears any previous decorations ✨
-- Runs Lizard analysis again 🧑‍💻
-- Applies new heatmap overlays based on updated complexity 🔥
+- Clears any previous decorations
+- Runs Lizard analysis again
+- Applies new heatmap overlays based on updated complexity
 
-When toggled **OFF**, it clears the decorations without deleting the stored analysis 🧹.
+When toggled **OFF**, it clears the decorations without deleting the stored analysis.
 
-When switching between files, the heatmap auto-applies if it was visible previously 🔄.
+When switching between files, the heatmap auto-applies if it was visible previously.
 
 #### Supported Languages
 Works with major languages supported by Lizard, including:
@@ -113,18 +113,18 @@ Works with major languages supported by Lizard, including:
 - JavaScript
 - Go 🌍, Kotlin 🟢, Swift 🍏, Rust ⚙️, Ruby 💎, Scala ⚛️.
 
-### 3. Refactoring Suggestions
 
+### 3. Refactoring Suggestions
 
 This feature helps developers improve the maintainability and readability of their C/C++ code by automatically detecting common **code smells** using **regex-based pattern matching** and suggesting actionable refactoring hints.
 
 #### Refactor Features
 
-- 🔍 **Code Smell Detection**: Scans code for patterns like long methods, deep nesting, large parameter lists, and magic numbers.
-- ✨ **Regex-Powered Analysis**: Uses regular expressions to extract and match patterns that indicate refactoring opportunities.
-- 📊 **Side Panel Suggestions**: Displays suggestions in a collapsible sidebar with issue count, explanation, and recommended actions.
-- 🔁 **One-click Refresh**: The suggestions update dynamically via a **Refresh** button for real-time analysis after each change.
-- 🧩 **Integration with Webview**: All refactoring suggestions are shown in a rich, styled panel within the editor using VS Code Webview.
+- **Code Smell Detection**: Scans code for patterns like long methods, deep nesting, large parameter lists, and magic numbers.
+- **Regex-Powered Analysis**: Uses regular expressions to extract and match patterns that indicate refactoring opportunities.
+- **Side Panel Suggestions**: Displays suggestions in a collapsible sidebar with issue count, explanation, and recommended actions.
+- **One-click Refresh**: The suggestions update dynamically via a **Refresh** button for real-time analysis after each change.
+- **Integration with Webview**: All refactoring suggestions are shown in a rich, styled panel within the editor using VS Code Webview.
 
 #### Detected Code Smells
 
@@ -141,23 +141,29 @@ Here are some of the key patterns identified:
 
 #### How It Works
 
-- On triggering the **Analyze Refactor** command via the Command Palette or side button, the extension:
+- On triggering the **Analyze Refactor** button via the Command Palette or side button, the extension:
   - Extracts all function definitions.
   - Applies multiple **regex rules** on the function body and surrounding code.
   - Flags issues and sends the list to a **Webview Panel**.
 - Each suggestion includes:
-  - 🎯 The location (line number)
-  - 🧠 A reason why it's considered a code smell
-  - 🛠️ A clear recommendation for improvement
+  - The location (line number)
+  - A reason why it's considered a code smell
+  - A clear recommendation for improvement
 
 #### Example Suggestions (Displayed in Webview)
 
 ```ts
-📏 Function `processData()` is 54 lines long. Consider breaking it down.
-🔢 Magic number `42` found in function `calculateTotal()`. Use named constant.
-🌲 Nested loop depth is 3 in function `parseResponse()`. Try to simplify.
+Function `processData()` is 54 lines long. Consider breaking it down.
+Magic number `42` found in function `calculateTotal()`. Use named constant.
+Nested loop depth is 3 in function `parseResponse()`. Try to simplify.
 ```
 
+#### Supported Languages
+
+This feature is designed specifically for C and C++ files.
+
+- **C**
+- **C++**
 
 ## Team Member Contributions
 
