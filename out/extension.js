@@ -91,6 +91,7 @@ function toggleHeatmapFunction() {
     else {
         // Heatmap is OFF, so apply the stored decorations
         // applyDecorations(editor);
+        vscode.window.showInformationMessage(`Hope the code is saved!`);
         if (storedDecorationsPerFile.has(filePath)) {
             clearDecorations(editor);
             storedDecorationsPerFile.delete(filePath);
