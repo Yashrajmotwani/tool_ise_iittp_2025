@@ -7,21 +7,27 @@ Our aim to to create a Code Review Checklist to help developers create better qu
 
 ## Installation Requirements
 
-1. This extension uses **Lizard** for complexity analysis. Make sure Python and Lizard are installed:
+**Make sure Python and Lizard are installed**
+
+1. This extension uses **Lizard** for complexity analysis:
 
 ```
 pip install lizard
 ```
 
-2. Search 
+2. To download python:
+
+You can download the latest version of Python from the official website: [python.org/downloads](https://www.python.org/downloads/)
+
+4. Search 
 
 > Code Review Helper or Code Review IIT 
  
 to find our Extension on VS Code Extensions
 
-3. Click on install Extension.
+4. Click on install Extension.
 
-4. To run and use extension on a Particular File:
+5. To run and use extension on a Particular File:
 
 > Ctrl + Shift + P
 
