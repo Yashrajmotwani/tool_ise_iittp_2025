@@ -116,6 +116,50 @@ Works with major languages supported by Lizard, including:
 ### 3. Refactoring Suggestions
 
 
+This feature helps developers improve the maintainability and readability of their C/C++ code by automatically detecting common **code smells** using **regex-based pattern matching** and suggesting actionable refactoring hints.
+
+#### Refactor Features
+
+- 🔍 **Code Smell Detection**: Scans code for patterns like long methods, deep nesting, large parameter lists, and magic numbers.
+- ✨ **Regex-Powered Analysis**: Uses regular expressions to extract and match patterns that indicate refactoring opportunities.
+- 📊 **Side Panel Suggestions**: Displays suggestions in a collapsible sidebar with issue count, explanation, and recommended actions.
+- 🔁 **One-click Refresh**: The suggestions update dynamically via a **Refresh** button for real-time analysis after each change.
+- 🧩 **Integration with Webview**: All refactoring suggestions are shown in a rich, styled panel within the editor using VS Code Webview.
+
+#### Detected Code Smells
+
+Here are some of the key patterns identified:
+
+| Pattern Detected        | Symbol | Explanation                                                                 |
+|-------------------------|--------|-----------------------------------------------------------------------------|
+| Long functions          | 📏     | Functions with too many lines, suggesting modularization                    |
+| Magic numbers           | 🔢     | Hardcoded numeric values should be replaced with named constants            |
+| Deep nesting            | 🌲     | If/Else or loops nested more than 2 levels—recommend simplification         |
+| Large parameter lists   | 📦     | Functions with >3 parameters—suggest grouping or using a struct             |
+| Repeated code blocks    | 🔁     | Duplicate code logic detected—recommend creating helper functions           |
+| Switch without default  | ❓     | `switch` cases missing `default` handling—can lead to missed conditions     |
+
+#### How It Works
+
+- On triggering the **Analyze Refactor** command via the Command Palette or side button, the extension:
+  - Extracts all function definitions.
+  - Applies multiple **regex rules** on the function body and surrounding code.
+  - Flags issues and sends the list to a **Webview Panel**.
+- Each suggestion includes:
+  - 🎯 The location (line number)
+  - 🧠 A reason why it's considered a code smell
+  - 🛠️ A clear recommendation for improvement
+
+#### Example Suggestions (Displayed in Webview)
+
+```ts
+📏 Function `processData()` is 54 lines long. Consider breaking it down.
+🔢 Magic number `42` found in function `calculateTotal()`. Use named constant.
+🌲 Nested loop depth is 3 in function `parseResponse()`. Try to simplify.
+```
+
+
+
 ## 
 
 
