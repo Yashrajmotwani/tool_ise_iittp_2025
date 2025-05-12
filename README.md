@@ -1,76 +1,141 @@
-<<<<<<< HEAD
-# tool_ise_iittp_2025
-Creating an Extension with multiple features
-=======
-# code-review-helper README
+# ISE TOOL PROJECT 2025
 
-This is the README for your extension "code-review-helper". After writing up a brief description, we recommend including the following sections.
+## Introduction
+
+Our aim to to create a Code Review Checklist to help developers create better quality code which is maintainable. We are showing refactoring suggestions to improve code quality by detecting code smells. We are also finding the code complexity and displaying the heatmap. Additionally we are finding code emotions and showing dynamic emoji-based feedback.
+
+
+## Installation Requirements
+
+1. This extension uses **Lizard** for complexity analysis. Make sure Python and Lizard are installed:
+
+```
+pip install lizard
+```
+
+2. Search 
+
+> Code Review Helper or Code Review IIT 
+ 
+to find our Extension on VS Code Extensions. Click on install.
+
+3. To run and use extension on a Particular File:
+
+> Ctrl + Shift + P
+
+
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### 1. CodeEmotion
 
-For example if there is an image subfolder under your extension project workspace:
+This feature provides an interactive and visual way to enhance the C/C++ code analysis by adding emoji decorations based on specific code patterns. It helps highlight common issues, patterns, and optimizations with fun and informative emojis!
 
-\!\[feature X\]\(images/feature-x.png\)
+#### Code Emotion Features
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- 💡 **Code Pattern Emojis**: Adds emojis to indicate patterns such as too many `if` statements, nested loops, large `switch` statements, and more.
+- 🚫 **Missing Semicolons Detection**: Flags missing semicolons at the end of statements in C/C++ code.
+- ⚠️ **Trailing Whitespace Detection**: Flags trailing whitespaces in your code to help maintain cleaner formatting.
+- 🧑‍💻 **Well-Structured Code**: Highlights well-structured control flows like `if`, `for`, and `while` statements, and encourages the use of modern C++ constructs like `unique_ptr` and `shared_ptr`.
+- 📝 **Clear Comments**: Adds emojis to single-line comments to remind developers to maintain and update comments when code changes.
 
-## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+#### Emoji Patterns
 
-## Extension Settings
+The extension detects and decorates your code based on various patterns:
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+- `💩`: Too many `if-else` statements.
+- `🌀`: Large `switch` statements (3+ cases).
+- `🔁`: Nested loops detected.
+- `🌟`: Well-structured control flow.
+- `⚡`: Performance optimization through `return`, `break`, or `continue`.
+- `👍`: Well-designed void functions.
+- `🧪`: Google Test macros or related test functions.
+- `✅`: Google Test assertions.
+- `🛡️`: Proper error handling using `try/catch`.
+- `🔮`: Use of constants instead of magic numbers.
+- `🧵`: Template literals usage in place of string concatenation.
+- `🏹`: Function pointer usage in C/C++.
+- `λ`: Lambda functions in C++.
+- `🧠`: Smart pointer usage (e.g., `unique_ptr`, `shared_ptr`, `weak_ptr`).
+- `🧪`: Catch2 test macros.
 
-For example:
 
-This extension contributes the following settings:
+#### Supported Languages
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+This extension is designed specifically for C and C++ files.
 
-## Known Issues
+- **C** (🔧)
+- **C++** (🔧)
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
 
-## Release Notes
+### 2. Cyclomatic Complexity Heatmap
 
-Users appreciate release notes as you update your extension.
+This feature helps developers analyze code complexity and improve code quality with a **visual heatmap overlay**.
 
-### 1.0.0
+#### Complexity Features
 
-Initial release of ...
+- 🧠 **Cyclomatic Complexity Analysis** using [Lizard](https://github.com/terryyin/lizard)
+- 🎨 **Color-coded Heatmap** overlay on functions based on complexity
+- ✅ **Toggle Heatmap** ON/OFF dynamically via command
+- 🔍 **Function-level Analysis Panel** with webview showing detailed complexity info
+<!-- - 🛠️ **Refactor suggestions** for C/C++ files based on basic code patterns -->
 
-### 1.0.1
 
-Fixed issue #.
+#### Heatmap Colors
+The heatmap uses a gradient from **green (low complexity)** to **red (high complexity)**:
 
-### 1.1.0
+| Complexity Score | Color  | Meaning              |
+|------------------|--------|----------------------|
+| 1–5              | 🟢 Green  | Low complexity       |
+| 6–10             | 🟡 Yellow | Moderate complexity  |
+| 11–15            | 🟠 Orange | High complexity      |
+| 16–25            | 🔴 Red    | Very high complexity |
 
-Added features X, Y, and Z.
+#### How Heatmap Toggle Works
+When toggled **ON**, the extension:
 
----
+- Clears any previous decorations ✨
+- Runs Lizard analysis again 🧑‍💻
+- Applies new heatmap overlays based on updated complexity 🔥
 
-## Following extension guidelines
+When toggled **OFF**, it clears the decorations without deleting the stored analysis 🧹.
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+When switching between files, the heatmap auto-applies if it was visible previously 🔄.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+#### Supported Languages
+Works with major languages supported by Lizard, including:
 
-## Working with Markdown
+- C, C++ 🔧
+- Java ☕
+- Python 🐍
+- C# 🔶
+- JavaScript
+- Go 🌍, Kotlin 🟢, Swift 🍏, Rust ⚙️, Ruby 💎, Scala ⚛️.
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+### 3. Refactoring Suggestions
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
 
-## For more information
+## 
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
-**Enjoy!**
->>>>>>> b5a458f (Initial commit of VS Code extension)
+## Work Distribution
+**Sai Jagadeesh (CS24M101)**
+
+ - Dynamic Code Complexity Analysis
+ - Dynamic Toggle heatmap
+ - Color to Complexity mapping
+ - Maintaining heatmap state for multiple files
+
+**Yashraj Motwani (CS24M104)**
+
+ - Dynamic Code Emotions 
+ - Feature Integration
+ - Webview Panel and UI
+ - Progress bar and Tasks handling
+
+**Tejas Meshram (CS24M108)**
+
+ - Refactoring Suggestions using Regex
+ - Refresh button for Tasks
+ - Add to VS Code Marketplace
