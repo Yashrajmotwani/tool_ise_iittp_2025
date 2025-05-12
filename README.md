@@ -9,31 +9,32 @@ Our aim to to create a Code Review Checklist to help developers create better qu
 
 **Make sure Python and Lizard are installed**
 
-1. This extension uses **Lizard** for complexity analysis:
+1. To download python:
 
-```
-pip install lizard
-```
+    You can download the latest version of Python from the official website: [python.org/downloads](https://www.python.org/downloads/)
 
-2. To download python:
+3. This extension uses **Lizard** for complexity analysis:
 
-You can download the latest version of Python from the official website: [python.org/downloads](https://www.python.org/downloads/)
+    ```
+    pip install lizard
+    ```
+
 
 ## Using the Extension
 
 1. Search to find our Extension on VS Code Extensions:
 
-``` Code Review Helper ```
-or 
-``` Code Review IIT ```
+    ``` Code Review Helper ```
+    or 
+    ``` Code Review IIT ```
 
 2. Click on **INSTALL** Extension
 
 3. To run and use extension on a Particular File:
 
-```
-Ctrl + Shift + P
-```
+    ```
+    Ctrl + Shift + P
+    ```
 
 
 ## Features
