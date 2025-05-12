@@ -207,3 +207,16 @@ This feature is designed specifically for C and C++ files.
  - Refactoring Suggestions using Regex
  - Refresh button for Tasks
  - Add to VS Code Marketplace
+
+## Screenshots
+
+![webview](https://github.com/user-attachments/assets/0922a4ba-5478-411a-a2c6-061bd76bba67)
+![analyzecode](https://github.com/user-attachments/assets/99143337-9dbd-40e4-a616-a009148563ab)
+![codecomplexity](https://github.com/user-attachments/assets/f8b8d241-2594-464b-862c-c9229280a37c)
+![taskupdates](https://github.com/user-attachments/assets/fc85647a-6f98-4bc7-822f-dba79a42881c)
+![refreshtasks](https://github.com/user-attachments/assets/fbd93e1d-08b9-4674-9b73-efd6768d3a14)
+![codeemotionemojis](https://github.com/user-attachments/assets/30c988b3-3621-40c2-a3c1-ee8e43894b70)
+![toggleheatmap](https://github.com/user-attachments/assets/ab33fb6a-b22c-4323-bd98-164bd86f57cd)
+![dynamictoggle](https://github.com/user-attachments/assets/4107b555-61be-42f6-b0ca-d1d6304b13ab)
+![dynamicemojiupdates](https://github.com/user-attachments/assets/b28e0e6f-d960-4ff4-a62e-131acdb13ea0)
+
