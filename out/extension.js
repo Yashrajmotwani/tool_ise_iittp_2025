@@ -83,31 +83,29 @@ function toggleHeatmapFunction() {
         return;
     }
     const filePath = editor.document.fileName;
-    const fileData = storedDecorationsPerFile.get(filePath);
-    if (!fileData) {
-        vscode.window.showWarningMessage('Heatmap data not found yet. Please run "Analyze Complexity" first.');
-        return;
-    }
     if (heatmapVisible) {
-        // Clear the decorations only from the editor, not from stored data
+        // Heatmap is currently ON, so clear the decorations
         clearDecorations(editor);
         vscode.window.showInformationMessage(`Heatmap is now OFF`);
     }
     else {
-        // Apply the stored decorations
-        applyDecorations(editor);
-        vscode.window.showInformationMessage(`Heatmap is now ON`);
+        // Heatmap is OFF, so apply the stored decorations
+        // applyDecorations(editor);
+        vscode.window.showInformationMessage(`Hope the code is saved!`);
+        if (storedDecorationsPerFile.has(filePath)) {
+            clearDecorations(editor);
+            storedDecorationsPerFile.delete(filePath);
+        }
+        runLizardAndDecorate(undefined, editor, () => {
+            applyDecorations(editor);
+            vscode.window.showInformationMessage(`Heatmap is now ON`);
+            // heatmapVisible = true;
+        });
     }
     // Toggle heatmap visibility state
     heatmapVisible = !heatmapVisible;
 }
 function getColorForComplexity(score) {
-    // const maxScore = 25;
-    // const normalized = Math.min(Math.max((score - 1) / (maxScore - 1), 0), 1);
-    // const r = Math.floor(Math.min(normalized * 150 + 50, 255));
-    // const g = Math.floor(Math.min((1 - normalized) * 150 + 50, 255));
-    // const b = 0;
-    // return `rgb(${r}, ${g}, ${b})`;
     const complexityColorMap = {
         1: "#00ff00", // Bright green
         2: "#33ff00",
@@ -138,14 +136,14 @@ function getColorForComplexity(score) {
     const safeScore = Math.max(1, Math.min(score, 25));
     return complexityColorMap[safeScore];
 }
-function runLizardAndDecorate(panel, editorOverride) {
+function runLizardAndDecorate(panel, editorOverride, onFinish) {
     const editor = editorOverride ?? lastActiveEditor;
-    // const editor = vscode.window.activeTextEditor;
     if (!editor) {
         vscode.window.showErrorMessage('No active editor found');
         return;
     }
     const filePath = editor.document.fileName;
+    // vscode.window.showErrorMessage(filePath);
     const langMap = {
         'c': 'cpp', 'cpp': 'cpp', 'cc': 'cpp', 'h': 'cpp',
         'java': 'java', 'cs': 'cs', 'js': 'javascript', 'ts': 'typescript',
@@ -195,18 +193,15 @@ function runLizardAndDecorate(panel, editorOverride) {
                 const decorationType = vscode.window.createTextEditorDecorationType({
                     backgroundColor: color
                 });
-                // const range = new vscode.Range(startLine - 1, 0, endLine - 1, 1000);
                 const range = {
                     range: new vscode.Range(startLine, 0, endLine - 1, 1000),
                     hoverMessage: `Complexity: ${score}`
                 };
-                // decorations.decorations.push(decor);
                 decorations.decorations.push({ type: decorationType, range });
             }
         }
         console.log(decorations.decorations);
         storedDecorationsPerFile.set(filePath, decorations);
-        // heatmapVisible = false;
         console.log("Functions to display:", functions);
         if (panel) {
             const tableData = functions.map(f => ({
@@ -223,8 +218,11 @@ function runLizardAndDecorate(panel, editorOverride) {
             });
         }
         else {
-            vscode.window.showErrorMessage("Analysis panel is not open. Please open the Code Review Checklist first.");
+            // vscode.window.showErrorMessage("Analysis panel is not open. Please open the Code Review Checklist first.");
         }
+        // ✅ Call the onFinish callback after all processing is done
+        if (onFinish)
+            onFinish();
     });
 }
 function activate(context) {
@@ -317,26 +315,20 @@ function activate(context) {
         });
     });
     context.subscriptions.push(vscode.commands.registerCommand('heatmap.toggleHeatmap', () => toggleHeatmapFunction()));
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+        if (editor && heatmapVisible) {
+            const filePath = editor.document.fileName;
+            const fileData = storedDecorationsPerFile.get(filePath);
+            if (fileData) {
+                applyDecorations(editor);
+            }
+        }
+    }));
     context.subscriptions.push({
         dispose: () => codeEmotion.dispose(),
     });
     context.subscriptions.push(disposable);
 }
-// export function deactivate() {
-//     // Dispose of the decoration type
-//     if (blue) {
-//         blue.dispose();
-//     }
-//     // Dispose of all active panels
-//     for (const panel of activePanels.values()) {
-//         panel.dispose();
-//     }
-//     activePanels.clear();
-//     // Dispose of any other resources if needed
-//     if (codeEmotion) {
-//         codeEmotion.dispose();
-//     }
-// }
 function deactivate() {
     // Dispose decoration types and reset state
     if (blue) {
