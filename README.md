@@ -159,11 +159,8 @@ Here are some of the key patterns identified:
 ```
 
 
+## Team Member Contributions
 
-## 
-
-
-## Work Distribution
 **Sai Jagadeesh (CS24M101)**
 
  - Dynamic Code Complexity Analysis
