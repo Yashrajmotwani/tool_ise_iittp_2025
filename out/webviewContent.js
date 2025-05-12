@@ -392,6 +392,18 @@ function getWebviewContent(fileName) {
                         </button>
                     </div>
                 </li>
+                <li class="task-item" data-task="goodemoji">
+                    <label>Have you got atleast 90% good emojis? <span class="emoji">🌟⚡👍🧪✅🛡️🔮🧵🏹λ🧠</span></label>
+                    <button class="btn btn-outline" onclick="completeTask('goodemoji')">
+                        <span class="emoji">✅</span> Mark Complete
+                    </button>
+                </li>
+                <li class="task-item" data-task="bademoji">
+                    <label>Hope you haven’t received any bad emoji? <span class="emoji">⚠️💩🌀🔁</span></label>
+                    <button class="btn btn-outline" onclick="completeTask('bademoji')">
+                        <span class="emoji">✅</span> Mark Complete
+                    </button>
+                </li>
 
                 <h3 style="margin: 20px 0 10px; color: var(--light-text);">General Pre-Review Checklist</h3>
 
@@ -436,7 +448,7 @@ function getWebviewContent(fileName) {
     <script>
         const vscode = acquireVsCodeApi();
         let completedTasks = 0;
-        const totalTasks = 6; // Total number of checklist items
+        const totalTasks = 8; // Total number of checklist items
         
         function updateProgress() {
             const progress = Math.round((completedTasks / totalTasks) * 100);
@@ -600,6 +612,12 @@ function getWebviewContent(fileName) {
     // Create a static progress bar with labels below
     let colorMappingHTML = 
         '<h3>Complexity and Corresponding Colors</h3>' +
+        // Labels above the color bar
+        '<div style="display: flex; width: 100%; font-size: 12px; margin-bottom: 2px;">' +
+            '<div style="flex: 1; text-align: left;">Low</div>' +
+            '<div style="flex: 1; text-align: right;">High</div>' +
+        '</div>' +
+
         // Color bar
         '<div style="display: flex; width: 100%; height: 30px; border: 1px solid #000; overflow: hidden; border-radius: 5px;">';
 
