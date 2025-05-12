@@ -5,7 +5,7 @@
 Our aim to to create a Code Review Checklist to help developers create better quality code which is maintainable. We are showing refactoring suggestions to improve code quality by detecting code smells. We are also finding the code complexity and displaying the heatmap. Additionally we are finding code emotions and showing dynamic emoji-based feedback.
 
 
-## Installation Requirements
+## Dependencies
 
 **Make sure Python and Lizard are installed**
 
@@ -19,18 +19,21 @@ pip install lizard
 
 You can download the latest version of Python from the official website: [python.org/downloads](https://www.python.org/downloads/)
 
-4. Search 
+## Using the Extension
 
-> Code Review Helper or Code Review IIT 
- 
-to find our Extension on VS Code Extensions
+1. Search to find our Extension on VS Code Extensions:
 
-4. Click on install Extension.
+``` Code Review Helper ```
+or 
+``` Code Review IIT ```
 
-5. To run and use extension on a Particular File:
+2. Click on **INSTALL** Extension
 
-> Ctrl + Shift + P
+3. To run and use extension on a Particular File:
 
+```
+Ctrl + Shift + P
+```
 
 
 ## Features
