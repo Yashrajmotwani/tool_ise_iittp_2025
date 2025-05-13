@@ -20,6 +20,14 @@ Our aim to to create a Code Review Checklist to help developers create better qu
     pip install lizard
     ```
 
+    For Mac:
+    ```
+    brew install pipx
+    pipx ensurepath
+    pipx install lizard
+    ```
+   
+
     For Linux:
     ```
     pip3 install lizard
