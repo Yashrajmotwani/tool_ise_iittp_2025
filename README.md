@@ -50,9 +50,14 @@ Our aim to to create a Code Review Checklist to help developers create better qu
 2. Click on **INSTALL** Extension
 
 3. To run and use extension on a Particular File:
-
+   
+    For windows, linux:
     ```
     Ctrl + Shift + P
+    ```
+    For mac:
+    ```
+    Cmd + Shift + P
     ```
 
 
