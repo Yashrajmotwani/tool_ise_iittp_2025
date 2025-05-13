@@ -167,7 +167,7 @@ Here are some of the key patterns identified:
   - Applies multiple **regex rules** on the function body and surrounding code.
   - Flags issues and sends the list to a **Webview Panel**.
 - Each suggestion includes:
-  - The location (line number)
+  - Function name
   - A reason why it's considered a code smell
   - A clear recommendation for improvement
 
