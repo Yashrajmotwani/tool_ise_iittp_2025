@@ -115,6 +115,17 @@ This feature helps developers analyze code complexity and improve code quality w
 - **Toggle Heatmap** ON/OFF dynamically via command
 - **Function-level Analysis Panel** with webview showing detailed complexity info
 
+To see the heatmap pm current active file, 
+    For windows, linux:
+    ```
+    Ctrl + Shift + P
+    ```
+    For mac:
+    ```
+    Cmd + Shift + P
+    ```
+Search for **Toggle Heatmap** and click on it.
+
 #### Heatmap Colors
 The heatmap uses a gradient from **green (low complexity)** to **red (high complexity)**:
 
